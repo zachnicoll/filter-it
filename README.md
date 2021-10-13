@@ -3,7 +3,7 @@
 ## Purpose
 This application serves as a platform for uploading images and applying various filters to said images, before sharing the image to the rest of the users on the platform - akin to a mashup of Instagram and DeviantArt.
 
-The project was created as part of a university assignment for a unit in Cloud Computing. It explores the implemenation of various AWS services to create a scalable and persistent application, where it can dynamically respond to changes in load, and uses both long term (S3/DynamoDB) and short term storage (ElastiCache).
+The project was created as part of a university assignment for a unit in Cloud Computing. It explores the implemenation of various AWS services to create a scalable and persistent application, where it dynamically responds to changes in load, and uses both long term (S3/DynamoDB) and short term storage (ElastiCache).
 
 ## AWS Services
 
@@ -19,7 +19,7 @@ The project was created as part of a university assignment for a unit in Cloud C
 
 #### Lambda & API Gateway
 
-### SQS
+#### SQS
 
 #### CloudWatch
 
@@ -40,5 +40,7 @@ _
 ```
 
 ### Authors
-[Zachary Nicoll](https://github.com/zachnicoll)
-[Audi Bailey](https://github.com/audibailey)
+
+- [Zachary Nicoll](https://github.com/zachnicoll)
+
+- [Audi Bailey](https://github.com/audibailey)
