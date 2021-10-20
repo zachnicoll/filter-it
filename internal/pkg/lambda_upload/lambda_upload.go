@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -34,16 +35,6 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		}, nil
 	}
 
-	awsProfile := os.Getenv("AWS_PROFILE")
-	if awsProfile == "" {
-		fmt.Println("AWS Profile was unable to be loaded from env vars.")
-
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "AWS Profile ENV Variable Missing.",
-		}, nil
-	}
-
 	awsRegion := os.Getenv("AWS_REGION")
 	if awsRegion == "" {
 		fmt.Println("AWS Region was unable to be loaded from env vars.")
@@ -54,11 +45,8 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		}, nil
 	}
 
-	awsSession, err := session.NewSessionWithOptions(session.Options{
-		// Specify profile to load for the session's config
-		Profile: awsProfile,
-
-		// Provide SDK Config options, such as Region.
+	awsSessionConfig, err := session.NewSessionWithOptions(session.Options{
+		// Provide SDK Config Region
 		Config: aws.Config{
 			Region: aws.String(awsRegion),
 		},
@@ -75,18 +63,18 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		}, nil
 	}
 
-	svc := s3.New(awsSession)
+	awsSession := s3.New(awsSessionConfig)
 
 	imageID := uuid.New()
 
 	imageName := fmt.Sprintf("uploads/%s.jpg", imageID.String())
-	r, _ := svc.PutObjectRequest(&s3.PutObjectInput{
+	r, _ := awsSession.PutObjectRequest(&s3.PutObjectInput{
 		Bucket: aws.String(s3Bucket),
 		Key:    aws.String(imageName),
 	})
 
 	// Create the pre-signed url with an expiry
-	url, err := r.Presign(15 * time.Minute)
+	presignURL, err := r.Presign(15 * time.Minute)
 	if err != nil {
 		fmt.Println("Unable to generate pre-sign URL.")
 
@@ -96,12 +84,14 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		}, nil
 	}
 
-	var uploadReponse = &UploadResponse{
-		Image: imageID.String(),
-		PresignURL: url,
+	cleanURL := url.QueryEscape(presignURL)
+
+	var uploadResponse = &UploadResponse{
+		Image: imageName,
+		PresignURL: cleanURL,
 	}
 
-	resp, err := json.Marshal(uploadReponse)
+	response, err := json.Marshal(uploadResponse)
 	if err != nil {
 		fmt.Println("Unable to convert response to JSON.")
 
@@ -116,6 +106,6 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		Headers: map[string]string {
 			"Content-Type": "application/json",
 		},
-		Body: string(resp),
+		Body: string(response),
 	}, nil
 }
