@@ -25,6 +25,7 @@ type UploadResponse struct {
 }
 
 func HandleRequest() (*events.APIGatewayProxyResponse, error) {
+	// Get S3 Bucket Name
 	s3Bucket := os.Getenv("S3_BUCKET")
 	if s3Bucket == "" {
 		fmt.Println("S3 bucket was unable to be loaded from env vars.")
@@ -35,6 +36,7 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		}, nil
 	}
 
+	// Get AWS Region
 	awsRegion := os.Getenv("AWS_REGION")
 	if awsRegion == "" {
 		fmt.Println("AWS Region was unable to be loaded from env vars.")
@@ -45,13 +47,12 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		}, nil
 	}
 
+	// Initialise AWS Session Config
 	awsSessionConfig, err := session.NewSessionWithOptions(session.Options{
-		// Provide SDK Config Region
 		Config: aws.Config{
 			Region: aws.String(awsRegion),
 		},
 
-		// Force enable Shared Config support
 		SharedConfigState: session.SharedConfigEnable,
 	})
 	if err != nil {
@@ -63,18 +64,21 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		}, nil
 	}
 
+	// Start an AWS Session
 	awsSession := s3.New(awsSessionConfig)
 
+	// Generate Image UUID
 	imageID := uuid.New()
 
+	// String format S3 image name and generate a S3 put request
 	imageName := fmt.Sprintf("uploads/%s.jpg", imageID.String())
-	r, _ := awsSession.PutObjectRequest(&s3.PutObjectInput{
+	s3PutRequest, _ := awsSession.PutObjectRequest(&s3.PutObjectInput{
 		Bucket: aws.String(s3Bucket),
 		Key:    aws.String(imageName),
 	})
 
-	// Create the pre-signed url with an expiry
-	presignURL, err := r.Presign(15 * time.Minute)
+	// Fetch S3 pre-sign URL from put request
+	presignURL, err := s3PutRequest.Presign(15 * time.Minute)
 	if err != nil {
 		fmt.Println("Unable to generate pre-sign URL.")
 
@@ -84,13 +88,14 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		}, nil
 	}
 
+	// URL escape format
 	cleanURL := url.QueryEscape(presignURL)
 
+	// Build and return JSON response
 	var uploadResponse = &UploadResponse{
 		Image: imageName,
 		PresignURL: cleanURL,
 	}
-
 	response, err := json.Marshal(uploadResponse)
 	if err != nil {
 		fmt.Println("Unable to convert response to JSON.")
