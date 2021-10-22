@@ -17,5 +17,10 @@ export interface ImageDocument {
   author: string; // Author of art piece
   filters: Filter[]; // List of filters to be applied/have been applied to the image
   progress: Progress; // Current progress of image processing in SQS
-  filename: string; // S3 filename of image related to this document
+  image: string; // S3 filename of image related to this document
+}
+
+export interface UploadResponse {
+  image: string // S3 filename of image
+  url: string // S3 pre-sign URL
 }
