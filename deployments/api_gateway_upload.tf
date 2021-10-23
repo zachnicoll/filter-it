@@ -24,7 +24,7 @@ resource "aws_api_gateway_integration" "uploadIntegration" {
   rest_api_id             = aws_api_gateway_rest_api.lambda.id
   resource_id             = aws_api_gateway_resource.uploadResource.id
   http_method             = aws_api_gateway_method.uploadLambda.http_method
-  integration_http_method = "POST"
+  integration_http_method = aws_api_gateway_method.uploadLambda.http_method
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.lambda_upload.invoke_arn
 }

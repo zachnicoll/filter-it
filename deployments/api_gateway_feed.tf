@@ -23,7 +23,7 @@ resource "aws_api_gateway_method_response" "feedGetResponse" {
 resource "aws_api_gateway_integration" "feedGetIntegration" {
   rest_api_id             = aws_api_gateway_rest_api.lambda.id
   resource_id             = aws_api_gateway_resource.feedResource.id
-  http_method             = aws_api_gateway_method.feedGetMethod.id
+  http_method             = aws_api_gateway_method.feedGetMethod.http_method
   integration_http_method = aws_api_gateway_method.feedGetMethod.http_method
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.lambda_queue.invoke_arn
