@@ -16,11 +16,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 
 	"github.com/aws/aws-sdk-go/service/s3"
-
 )
 
 type UploadResponse struct {
-	Image string `json:"image"`
+	Image      string `json:"image"`
 	PresignURL string `json:"url"`
 }
 
@@ -93,7 +92,7 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 
 	// Build and return JSON response
 	var uploadResponse = &UploadResponse{
-		Image: imageName,
+		Image:      imageName,
 		PresignURL: cleanURL,
 	}
 	response, err := json.Marshal(uploadResponse)
@@ -108,7 +107,7 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 
 	return &events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
-		Headers: map[string]string {
+		Headers: map[string]string{
 			"Content-Type": "application/json",
 		},
 		Body: string(response),
