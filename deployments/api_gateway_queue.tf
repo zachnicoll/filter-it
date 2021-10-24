@@ -5,7 +5,7 @@ resource "aws_api_gateway_resource" "queueResource" {
   path_part   = "queue"
 }
 
-resource "aws_api_gateway_method" "queueLambda" {
+resource "aws_api_gateway_method" "queuePostMethod" {
   rest_api_id   = aws_api_gateway_rest_api.lambda.id
   resource_id   = aws_api_gateway_resource.queueResource.id
   http_method   = "POST"
@@ -15,14 +15,14 @@ resource "aws_api_gateway_method" "queueLambda" {
 resource "aws_api_gateway_method_response" "queueResponse" {
   rest_api_id = aws_api_gateway_rest_api.lambda.id
   resource_id = aws_api_gateway_resource.queueResource.id
-  http_method = aws_api_gateway_method.queueLambda.http_method
+  http_method = aws_api_gateway_method.queuePostMethod.http_method
   status_code = "200"
 }
 
 resource "aws_api_gateway_integration" "queueIntegration" {
   rest_api_id             = aws_api_gateway_rest_api.lambda.id
   resource_id             = aws_api_gateway_resource.queueResource.id
-  http_method             = aws_api_gateway_method.queueLambda.http_method
+  http_method             = aws_api_gateway_method.queuePostMethod.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.lambda_queue.invoke_arn
@@ -33,27 +33,14 @@ resource "aws_api_gateway_integration_response" "queueIntResponse" {
 
   rest_api_id = aws_api_gateway_rest_api.lambda.id
   resource_id = aws_api_gateway_resource.queueResource.id
-  http_method = aws_api_gateway_method.queueLambda.http_method
+  http_method = aws_api_gateway_method.queuePostMethod.http_method
   status_code = aws_api_gateway_method_response.queueResponse.status_code
 }
 
-resource "aws_api_gateway_deployment" "queueDeployment" {
-  depends_on = [
-    aws_api_gateway_integration_response.queueIntResponse,
-    aws_api_gateway_method.queueLambda,
-  ]
-  rest_api_id = aws_api_gateway_rest_api.lambda.id
-}
-
-resource "aws_api_gateway_stage" "queueStage" {
-  stage_name    = "queue_stage"
-  rest_api_id   = aws_api_gateway_rest_api.lambda.id
-  deployment_id = aws_api_gateway_deployment.queueDeployment.id
-}
 
 resource "aws_api_gateway_method_settings" "queueMethod" {
   rest_api_id = aws_api_gateway_rest_api.lambda.id
-  stage_name  = aws_api_gateway_stage.queueStage.stage_name
+  stage_name  = aws_api_gateway_stage.prod.stage_name
 
   method_path = "*/*"
 
