@@ -24,9 +24,9 @@ resource "aws_api_gateway_integration" "feedGetIntegration" {
   rest_api_id             = aws_api_gateway_rest_api.lambda.id
   resource_id             = aws_api_gateway_resource.feedResource.id
   http_method             = aws_api_gateway_method.feedGetMethod.http_method
-  integration_http_method = aws_api_gateway_method.feedGetMethod.http_method
+  integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.lambda_queue.invoke_arn
+  uri                     = aws_lambda_function.lambda_feed.invoke_arn
 }
 
 resource "aws_api_gateway_integration_response" "feedGetIntResponse" {
@@ -38,18 +38,18 @@ resource "aws_api_gateway_integration_response" "feedGetIntResponse" {
   status_code = aws_api_gateway_method_response.feedGetResponse.status_code
 }
 
-resource "aws_api_gateway_stage" "feedStage" {
-  stage_name    = "prod"
-  rest_api_id   = aws_api_gateway_rest_api.lambda.id
-  deployment_id = aws_api_gateway_deployment.feedDeployment.id
-}
-
 resource "aws_api_gateway_deployment" "feedDeployment" {
   depends_on = [
     aws_api_gateway_integration_response.feedGetIntResponse,
-    aws_api_gateway_method_response.feedGetResponse,
+    aws_api_gateway_method.feedGetMethod,
   ]
   rest_api_id = aws_api_gateway_rest_api.lambda.id
+}
+
+resource "aws_api_gateway_stage" "feedStage" {
+  stage_name    = "feed_stage"
+  rest_api_id   = aws_api_gateway_rest_api.lambda.id
+  deployment_id = aws_api_gateway_deployment.feedDeployment.id
 }
 
 resource "aws_api_gateway_method_settings" "feedMethodSettings" {
@@ -62,4 +62,15 @@ resource "aws_api_gateway_method_settings" "feedMethodSettings" {
     throttling_rate_limit  = 5
     throttling_burst_limit = 10
   }
+}
+
+resource "aws_lambda_permission" "feed_lambda_permission" {
+  statement_id  = "AllowFeedAPIInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_feed.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # The /*/*/* part allows invocation from any stage, method and resource path
+  # within API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.lambda.execution_arn}/*/*/*"
 }

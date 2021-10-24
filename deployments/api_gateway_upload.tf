@@ -9,7 +9,7 @@ resource "aws_api_gateway_resource" "uploadResource" {
 resource "aws_api_gateway_method" "uploadLambda" {
   rest_api_id   = aws_api_gateway_rest_api.lambda.id
   resource_id   = aws_api_gateway_resource.uploadResource.id
-  http_method   = "GET"
+  http_method   = "POST"
   authorization = "NONE"
 }
 
@@ -24,7 +24,7 @@ resource "aws_api_gateway_integration" "uploadIntegration" {
   rest_api_id             = aws_api_gateway_rest_api.lambda.id
   resource_id             = aws_api_gateway_resource.uploadResource.id
   http_method             = aws_api_gateway_method.uploadLambda.http_method
-  integration_http_method = aws_api_gateway_method.uploadLambda.http_method
+  integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.lambda_upload.invoke_arn
 }
@@ -38,18 +38,18 @@ resource "aws_api_gateway_integration_response" "uploadIntResponse" {
   status_code = aws_api_gateway_method_response.uploadResponse.status_code
 }
 
-resource "aws_api_gateway_stage" "uploadStage" {
-  stage_name    = "prod"
-  rest_api_id   = aws_api_gateway_rest_api.lambda.id
-  deployment_id = aws_api_gateway_deployment.uploadDeployment.id
-}
-
 resource "aws_api_gateway_deployment" "uploadDeployment" {
   depends_on = [
     aws_api_gateway_integration_response.uploadIntResponse,
-    aws_api_gateway_method_response.uploadResponse,
+    aws_api_gateway_method.uploadLambda,
   ]
   rest_api_id = aws_api_gateway_rest_api.lambda.id
+}
+
+resource "aws_api_gateway_stage" "uploadStage" {
+  stage_name    = "upload_stage"
+  rest_api_id   = aws_api_gateway_rest_api.lambda.id
+  deployment_id = aws_api_gateway_deployment.uploadDeployment.id
 }
 
 resource "aws_api_gateway_method_settings" "uploadMethod" {
@@ -62,4 +62,15 @@ resource "aws_api_gateway_method_settings" "uploadMethod" {
     throttling_rate_limit  = 5
     throttling_burst_limit = 10
   }
+}
+
+resource "aws_lambda_permission" "upload_lambda_permission" {
+  statement_id  = "AllowUploadAPIInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_upload.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # The /*/*/* part allows invocation from any stage, method and resource path
+  # within API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.lambda.execution_arn}/*/*/*"
 }

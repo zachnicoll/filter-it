@@ -30,7 +30,17 @@ resource "null_resource" "compile_lambda_queue" {
   }
 }
 
-/* Arechiver Executables */
+resource "null_resource" "compile_website" {
+  triggers = {
+    build_number = "${timestamp()}"
+  }
+
+  provisioner "local-exec" {
+    command = "rm -rf ${path.module}/out/website/ && mkdir ${path.module}/out/website/ && cd ../website && yarn && yarn build && cd - && mv ../website/out/* ${path.module}/out/website/"
+  }
+}
+
+/* Archiver Executables */
 data "archive_file" "lambda_feed_zip" {
   source_file = "${path.module}/out/lambda_feed"
   output_path = "${path.module}/out/lambda_feed.zip"

@@ -53,7 +53,7 @@ resource "aws_iam_policy" "lambda_exec_sqs" {
       "Action": [
         "sqs:SendMessage"
       ],
-      "Resource": "${aws_sqs_queue.queue.arn}",
+      "Resource": "${aws_sqs_queue.filterit-queue.arn}",
       "Effect": "Allow"
     }
   ]
@@ -74,7 +74,7 @@ resource "aws_iam_policy" "lambda_exec_s3" {
       "Action": [
         "s3:PutObject"
       ],
-      "Resource": "${aws_s3_bucket.bucket.arn}",
+      "Resource": "${aws_s3_bucket.image_bucket.arn}",
       "Effect": "Allow"
     }
   ]
@@ -128,4 +128,19 @@ resource "aws_iam_role_policy_attachment" "lambda_s3" {
 resource "aws_iam_role_policy_attachment" "lambda_dynamodb" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = aws_iam_policy.lambda_exec_dynamodb.arn
+}
+
+data "aws_iam_policy_document" "website_policy" {
+  statement {
+    actions = [
+      "s3:GetObject"
+    ]
+    principals {
+      identifiers = ["*"]
+      type        = "AWS"
+    }
+    resources = [
+      "arn:aws:s3:::${var.website_bucket}/*"
+    ]
+  }
 }
