@@ -38,23 +38,9 @@ resource "aws_api_gateway_integration_response" "feedGetIntResponse" {
   status_code = aws_api_gateway_method_response.feedGetResponse.status_code
 }
 
-resource "aws_api_gateway_deployment" "feedDeployment" {
-  depends_on = [
-    aws_api_gateway_integration_response.feedGetIntResponse,
-    aws_api_gateway_method.feedGetMethod,
-  ]
-  rest_api_id = aws_api_gateway_rest_api.lambda.id
-}
-
-resource "aws_api_gateway_stage" "feedStage" {
-  stage_name    = "feed_stage"
-  rest_api_id   = aws_api_gateway_rest_api.lambda.id
-  deployment_id = aws_api_gateway_deployment.feedDeployment.id
-}
-
 resource "aws_api_gateway_method_settings" "feedMethodSettings" {
   rest_api_id = aws_api_gateway_rest_api.lambda.id
-  stage_name  = aws_api_gateway_stage.feedStage.stage_name
+  stage_name  = aws_api_gateway_stage.prod.stage_name
 
   method_path = "*/*"
 

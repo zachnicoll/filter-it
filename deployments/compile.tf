@@ -30,15 +30,16 @@ resource "null_resource" "compile_lambda_queue" {
   }
 }
 
-resource "null_resource" "compile_website" {
-  triggers = {
-    build_number = "${timestamp()}"
-  }
+# TODO: Get website build working
+# resource "null_resource" "compile_website" {
+#   triggers = {
+#     build_number = "${timestamp()}"
+#   }
 
-  provisioner "local-exec" {
-    command = "rm -rf ${path.module}/out/website/ && mkdir ${path.module}/out/website/ && cd ../website && yarn && yarn build && cd - && mv ../website/out/* ${path.module}/out/website/"
-  }
-}
+#   provisioner "local-exec" {
+#     command = "rm -rf ${path.module}/out/website/ && mkdir ${path.module}/out/website/ && cd ../website && yarn && yarn build && cd - && mv ../website/out/* ${path.module}/out/website/"
+#   }
+# }
 
 /* Archiver Executables */
 data "archive_file" "lambda_feed_zip" {

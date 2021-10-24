@@ -19,4 +19,8 @@ resource "aws_dynamodb_table" "ddbtable" {
     name = "date_created"
     type = "S"
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
