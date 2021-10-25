@@ -11,35 +11,9 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
-
-type FeedRequestBody struct {
-	Filters []string `json:"filters"`
-}
-
-const (
-	GREYSCALE int = 0
-	SEPIA         = 1
-	INVERT        = 2
-)
-
-const (
-	READY      int = 0
-	PROCESSING     = 1
-	DONE           = 2
-	FAILED         = 3
-)
-
-type ImageDocument struct {
-	Id          string `json:"id"`
-	DateCreated int    `json:"date_created"`
-	Filters     []int  `json:"filters"`
-	Progress    int    `json:"progress"`
-	Title       string `json:"title"`
-	Author      string `json:"author"`
-	Image       string `json:"image"`
-}
 
 func HandleRequest(ctx context.Context, event FeedRequestBody) *events.APIGatewayProxyResponse {
 	// Load default AWS config, including AWS_REGION env var
@@ -54,8 +28,30 @@ func HandleRequest(ctx context.Context, event FeedRequestBody) *events.APIGatewa
 	// Scan DynamoDB table to retrieve ALL documents
 	tableName := os.Getenv("AWS_IMAGE_TABLE")
 
+	// Create a condition for each filter supplied with the request,
+	// so that each retrieved document must include each of the supplied filters
+	conditions := []expression.ConditionBuilder{}
+
+	for _, filter := range event.Filters {
+		condition := expression.Name("filters").In(expression.Value(filter))
+		conditions = append(conditions, condition)
+	}
+
+	builder := expression.NewBuilder()
+
+	for _, condition := range conditions {
+		builder = builder.WithCondition(condition)
+	}
+
+	expr, err := builder.Build()
+	if err != nil {
+		return helpers.InternalServerError(err)
+	}
+
+	// Perform the scan with any conditions that may be present
 	input := &dynamodb.ScanInput{
-		TableName: &tableName,
+		TableName:        &tableName,
+		FilterExpression: expr.Condition(),
 	}
 
 	resp, err := client.Scan(context.TODO(), input)
