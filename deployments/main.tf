@@ -4,6 +4,12 @@ terraform {
       source = "hashicorp/aws"
     }
   }
+
+  backend "s3" {
+    bucket = "filterit-terraform-state"
+    key    = "terraform.tfstate"
+    region = "ap-southeast-2"
+  }
 }
 
 provider "aws" {
