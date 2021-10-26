@@ -15,3 +15,7 @@ terraform {
 provider "aws" {
   region = "ap-southeast-2"
 }
+
+variable "subnet_group" {
+  default = "qut-subnets"
+}
