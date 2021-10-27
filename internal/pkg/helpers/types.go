@@ -1,7 +1,7 @@
-package lambda_feed
+package helpers
 
 type FeedRequestBody struct {
-	Filters []string `json:"filters"`
+	Filters []int `json:"filters"`
 }
 
 const (
