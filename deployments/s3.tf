@@ -9,6 +9,13 @@ variable "website_bucket" {
 resource "aws_s3_bucket" "image_bucket" {
   bucket = var.image_bucket
 
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["PUT", "GET"]
+    allowed_origins = ["*"]
+    max_age_seconds = 3000
+  }
+
   lifecycle {
     prevent_destroy = true
   }

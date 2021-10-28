@@ -72,9 +72,10 @@ resource "aws_iam_policy" "lambda_exec_s3" {
   "Statement": [
     {
       "Action": [
+        "s3:GetObject",
         "s3:PutObject"
       ],
-      "Resource": "${aws_s3_bucket.image_bucket.arn}",
+      "Resource": "${aws_s3_bucket.image_bucket.arn}/*",
       "Effect": "Allow"
     }
   ]
