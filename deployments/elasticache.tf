@@ -10,6 +10,4 @@ resource "aws_elasticache_cluster" "redis" {
   parameter_group_name = "default.redis3.2"
   engine_version       = "3.2.10"
   port                 = 6379
-  subnet_group_name    = var.subnet_group
-  security_group_ids   = ["sg-032bd1ff8cf77dbb9"]
 }
