@@ -17,6 +17,7 @@ import {
   FormCheckBoxInput,
   FormRow,
 } from "./UploadBox.styles";
+import { filterStringMap } from "../../common/enum.maps";
 
 export const UploadBox = () => {
   const dropzoneRef = createRef<DropzoneRef>();
@@ -52,27 +53,46 @@ export const UploadBox = () => {
 
   const UploadImage = () => {
     if (file && author && title && !filter.every((v) => v === false)) {
-      API.upload.get().then((uploadResponse) => {
-        API.s3.put(uploadResponse.url, file.file).then((s3Response) => {
-          if (s3Response == 200) {
-            API.queue
-              .post({
-                author,
-                title,
-                image: uploadResponse.image,
-                filter: filter,
-              })
-              .then((response) => {
-                // TODO: push a context to handle Image Process Tracking
-              });
-          } else {
-            toastError(
-              "Image Upload Failed. Please try again later.",
-              new Error("S3 failed to upload.")
-            );
-          }
+      API.upload
+        .get()
+        .then((uploadResponse) => {
+          const url = decodeURIComponent(uploadResponse.url);
+          API.s3
+            .put(url, file.file)
+            .then((s3Response) => {
+              if (s3Response == 200) {
+                const mapCheckboxes = Object.keys(Filter)
+                  // @ts-ignore
+                  .filter((key) => !isNaN(Number(Filter[key])))
+                  .map((value, index) => {
+                    if (filter[index]) {
+                      return value;
+                    }
+                  });
+                // API.queue
+                //   .post({
+                //     author,
+                //     title,
+                //     image: uploadResponse.image,
+                //     filter: filter,
+                //   })
+                //   .then((response) => {
+                //     // TODO: push a context to handle Image Process Tracking
+                //   });
+              } else {
+                toastError(
+                  "Image Upload Failed. Please try again later.",
+                  new Error("S3 failed to upload.")
+                );
+              }
+            })
+            .catch((error) => {
+              toastError("Image Upload Failed. Please try again later.", error);
+            });
+        })
+        .catch((error) => {
+          toastError("Image Upload Failed. Please try again later.", error);
         });
-      });
     } else {
       toastError("All Fields Required!", new Error("Empty Upload Fields"));
     }
