@@ -30,6 +30,11 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		fmt.Println("S3 bucket was unable to be loaded from env vars.")
 
 		return &events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin": "*",
+				"Access-Control-Allow-Credentials": "true",
+				"Access-Control-Allow-Methods": "GET",
+			},
 			StatusCode: http.StatusInternalServerError,
 			Body:       "S3 Bucket ENV Variable Missing.",
 		}, nil
@@ -41,6 +46,11 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		fmt.Println("AWS Region was unable to be loaded from env vars.")
 
 		return &events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin": "*",
+				"Access-Control-Allow-Credentials": "true",
+				"Access-Control-Allow-Methods": "GET",
+			},
 			StatusCode: http.StatusInternalServerError,
 			Body:       "AWS Region ENV Variable Missing.",
 		}, nil
@@ -58,6 +68,11 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		fmt.Println("Unable to configure AWS Client.")
 
 		return &events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin": "*",
+				"Access-Control-Allow-Credentials": "true",
+				"Access-Control-Allow-Methods": "GET",
+			},
 			StatusCode: http.StatusInternalServerError,
 			Body:       "Unable to configure AWS Client.",
 		}, nil
@@ -82,6 +97,11 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		fmt.Println("Unable to generate pre-sign URL.")
 
 		return &events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin": "*",
+				"Access-Control-Allow-Credentials": "true",
+				"Access-Control-Allow-Methods": "GET",
+			},
 			StatusCode: http.StatusInternalServerError,
 			Body:       "Unable to generate pre-sign URL.",
 		}, nil
@@ -100,6 +120,11 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		fmt.Println("Unable to convert response to JSON.")
 
 		return &events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin": "*",
+				"Access-Control-Allow-Credentials": "true",
+				"Access-Control-Allow-Methods": "GET",
+			},
 			StatusCode: http.StatusInternalServerError,
 			Body:       "Unable to convert response to JSON.",
 		}, nil
@@ -109,6 +134,9 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		StatusCode: http.StatusOK,
 		Headers: map[string]string{
 			"Content-Type": "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Credentials": "true",
+			"Access-Control-Allow-Methods": "GET",
 		},
 		Body: string(response),
 	}, nil
