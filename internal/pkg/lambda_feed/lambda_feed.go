@@ -14,7 +14,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-func HandleRequest(_ctx context.Context, event util.FeedRequestBody) (*events.APIGatewayProxyResponse, error) {
+func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	ctx := context.Background()
 
 	// Load default AWS config, including AWS_REGION env var
@@ -23,17 +23,16 @@ func HandleRequest(_ctx context.Context, event util.FeedRequestBody) (*events.AP
 	if err != nil {
 		return util.InternalServerError(err, "GET"), err
 	}
+	filter := request.QueryStringParameters["filter"]
 
-	filters := event.Filters
-	util.SortFilters(filters)
-
-	fmt.Println(filters)
+	// If filter is not present in query, set it to the "all" redis key
+	if filter == "" {
+		filter = "_"
+	}
 
 	redisClient := util.ConnectToRedis()
 
-	// Attempt to get cached documents from Redis
-	redisKey := util.ConstructRedisKey(filters)
-
+	redisKey := filter
 	cachedDoc, err := redisClient.Get(ctx, redisKey).Result()
 
 	if err == nil && cachedDoc != "" {
@@ -51,7 +50,7 @@ func HandleRequest(_ctx context.Context, event util.FeedRequestBody) (*events.AP
 	// Scan DynamoDB table to retrieve ALL documents
 	tableName := os.Getenv("AWS_IMAGE_TABLE")
 
-	expr, err := util.BuildFilterConditions(filters)
+	expr, err := util.BuildFilterConditions(filter)
 	if err != nil {
 		return util.InternalServerError(err, "GET"), err
 	}
@@ -93,9 +92,7 @@ func HandleRequest(_ctx context.Context, event util.FeedRequestBody) (*events.AP
 	// Convert JSON to string
 	responseStr := string(response)
 
-	fmt.Println("Response String: ", responseStr)
-
-	util.CacheJSONString(ctx, redisKey, responseStr, filters, redisClient)
+	util.CacheJSONString(ctx, redisKey, responseStr, redisClient)
 
 	return util.JSONStringResponse(responseStr, "GET"), nil
 }
