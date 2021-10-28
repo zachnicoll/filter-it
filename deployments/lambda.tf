@@ -51,7 +51,7 @@ resource "aws_lambda_function" "lambda_feed" {
   source_code_hash = data.archive_file.lambda_feed_zip.output_base64sha256
 
   vpc_config {
-    subnet_ids         = [aws_subnet.filterit-subnet-private-1.id]
+    subnet_ids         = [aws_subnet.filterit-subnet-private-1.id, aws_subnet.filterit-subnet-public-1.id]
     security_group_ids = [aws_security_group.filterit-sg.id]
   }
 

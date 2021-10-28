@@ -4,7 +4,7 @@ variable "elasticache_name" {
 
 resource "aws_elasticache_subnet_group" "redis_subnet" {
   name       = "redis-subnet"
-  subnet_ids = [aws_subnet.filterit-subnet-private-1.id]
+  subnet_ids = [aws_subnet.filterit-subnet-public-1.id, aws_subnet.filterit-subnet-private-1.id]
 }
 
 resource "aws_elasticache_cluster" "redis" {
@@ -16,4 +16,5 @@ resource "aws_elasticache_cluster" "redis" {
   engine_version       = "3.2.10"
   port                 = 6379
   subnet_group_name    = aws_elasticache_subnet_group.redis_subnet.name
+  security_group_ids   = [aws_security_group.filterit-sg.id]
 }
