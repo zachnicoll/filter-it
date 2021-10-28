@@ -30,12 +30,12 @@ resource "aws_instance" "image_processor" {
   }
 }
 
-resource "aws_ami_from_instance" "image_processor_ami" {
-  name               = var.processor_ami_name
-  source_instance_id = aws_instance.image_processor.id
+# resource "aws_ami_from_instance" "image_processor_ami" {
+#   name               = var.processor_ami_name
+#   source_instance_id = aws_instance.image_processor.id
 
-  depends_on = [
-    null_resource.remote_image_processor
-  ]
-}
+#   depends_on = [
+#     null_resource.remote_image_processor
+#   ]
+# }
 
