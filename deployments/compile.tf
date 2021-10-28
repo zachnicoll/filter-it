@@ -30,6 +30,19 @@ resource "null_resource" "compile_lambda_queue" {
   }
 }
 
+#resource "null_resource" "dockerise_image_processor" {
+#  triggers = {
+#    build_number = timestamp()
+#  }
+#
+#  provisioner "local-exec" {
+#    command = <<-EOT
+#    docker build -f ../build/Dockerfile.filterit -t znicoll/filter-it-image-processor ../
+#    docker push znicoll/filter-it-image-processor:latest
+#    EOT
+#  }
+#}
+
 # TODO: Get website build working
 # resource "null_resource" "compile_website" {
 #   triggers = {
