@@ -2,31 +2,31 @@
 
 resource "null_resource" "compile_lambda_feed" {
   triggers = {
-    build_number = "${timestamp()}"
+    build_number = timestamp()
   }
 
   provisioner "local-exec" {
-    command = "go build -o ./out/lambda_feed ../cmd/lambda_feed"
+    command = "GOOS=linux go build -o ./out/lambda_feed ../cmd/lambda_feed"
   }
 }
 
 resource "null_resource" "compile_lambda_upload" {
   triggers = {
-    build_number = "${timestamp()}"
+    build_number = timestamp()
   }
 
   provisioner "local-exec" {
-    command = "go build -o ./out/lambda_upload ../cmd/lambda_upload"
+    command = "GOOS=linux go build -o ./out/lambda_upload ../cmd/lambda_upload"
   }
 }
 
 resource "null_resource" "compile_lambda_queue" {
   triggers = {
-    build_number = "${timestamp()}"
+    build_number = timestamp()
   }
 
   provisioner "local-exec" {
-    command = "go build -o ./out/lambda_queue ../cmd/lambda_queue"
+    command = "GOOS=linux go build -o ./out/lambda_queue ../cmd/lambda_queue"
   }
 }
 
