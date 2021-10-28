@@ -1,9 +1,5 @@
 package util
 
-type FeedRequestBody struct {
-	Filters []int `json:"filters"`
-}
-
 const (
 	GREYSCALE int = 0
 	SEPIA         = 1
@@ -18,13 +14,13 @@ const (
 )
 
 type ImageDocument struct {
-	Id          string 	`json:"id,omitempty"`
-	DateCreated int64   `json:"date_created,omitempty"`
-	Filter     	int  	`json:"filter"`
-	Progress    int    	`json:"progress,omitempty"`
-	Title       string 	`json:"title"`
-	Author      string 	`json:"author"`
-	Image       string 	`json:"image"`
+	Id          string `json:"id,omitempty"`
+	DateCreated int64  `json:"date_created,omitempty"`
+	Filter      int    `json:"filter"`
+	Progress    int    `json:"progress,omitempty"`
+	Title       string `json:"title"`
+	Author      string `json:"author"`
+	Image       string `json:"image"`
 }
 
 type QueueResponse struct {
