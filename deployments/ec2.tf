@@ -18,17 +18,13 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # Canonical
 }
 
-#resource "aws_instance" "image_processor" {
-#  ami             = data.aws_ami.ubuntu.id
-#  instance_type   = "t2.micro"
-#  security_groups = ["CAB432SG"]
-#  subnet_id       = var.subnet_id
-#  key_name        = aws_key_pair.image_processor_key.key_name
-#
-#  tags = {
-#    "Name" = "Filter-It Image Processor AMI"
-#  }
-#}
+# resource "aws_instance" "image_processor" {
+#   ami             = data.aws_ami.ubuntu.id
+#   instance_type   = "t2.micro"
+#   security_groups = [aws_security_group.filterit-sg.id]
+#   subnet_id       = aws_subnet.filterit-subnet-private-1.id
+#   key_name        = aws_key_pair.image_processor_key.key_name
+# }
 
 # resource "aws_ami_from_instance" "image_processor_ami" {
 #   name               = var.processor_ami_name
