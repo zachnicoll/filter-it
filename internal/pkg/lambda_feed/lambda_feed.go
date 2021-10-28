@@ -14,11 +14,11 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-func HandleRequest(ctx context.Context, event util.FeedRequestBody) *events.APIGatewayProxyResponse {
+func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.APIGatewayProxyResponse, error) {
 	// Load default AWS config, including AWS_REGION env var
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return util.InternalServerError(err)
+		return util.InternalServerError(err), err
 	}
 
 	filters := event.Filters
@@ -32,9 +32,9 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) *events.APIG
 
 	if err == nil && cachedDoc != "" {
 		// Found a cached document for this query, return it
-		return util.JSONStringResponse(cachedDoc)
+		return util.JSONStringResponse(cachedDoc), nil
 	} else if err != redis.Nil {
-		fmt.Printf("Failed to fetch cached document from Redis: %v", err.Error())
+		fmt.Printf("Failed to fetch cached document from Redis: %v\n", err.Error())
 
 		// Continue with execution, regardless of cache retrieval failure
 	}
@@ -47,7 +47,7 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) *events.APIG
 
 	expr, err := util.BuildFilterConditions(filters)
 	if err != nil {
-		return util.InternalServerError(err)
+		return util.InternalServerError(err), err
 	}
 
 	// Perform the scan with any conditions that may be present
@@ -58,7 +58,7 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) *events.APIG
 
 	scanOutput, err := client.Scan(ctx, scanInput)
 	if err != nil {
-		return util.InternalServerError(err)
+		return util.InternalServerError(err), err
 	}
 
 	// Convert response items to list of ImageDocument
@@ -66,7 +66,7 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) *events.APIG
 
 	err = attributevalue.UnmarshalListOfMaps(scanOutput.Items, &documents)
 	if err != nil {
-		return util.InternalServerError(err)
+		return util.InternalServerError(err), err
 	}
 
 	// Sort documents by DateCreated, with latest first
@@ -75,7 +75,7 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) *events.APIG
 	// Convert documents to JSON
 	response, err := json.Marshal(documents)
 	if err != nil {
-		return util.InternalServerError(err)
+		return util.InternalServerError(err), err
 	}
 
 	// Convert JSON to string
@@ -83,5 +83,5 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) *events.APIG
 
 	util.CacheJSONString(ctx, redisKey, responseStr, filters, redisClient)
 
-	return util.JSONStringResponse(responseStr)
+	return util.JSONStringResponse(responseStr), nil
 }
