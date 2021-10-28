@@ -39,7 +39,7 @@ func SortFilters(filters []int) {
 	sort.Slice(
 		filters,
 		func(i, j int) bool {
-			return i < j
+			return i > j
 		},
 	)
 }
@@ -51,7 +51,7 @@ func SortDocuments(documents []ImageDocument) {
 	sort.Slice(
 		documents,
 		func(i, j int) bool {
-			return documents[i].DateCreated > documents[j].DateCreated
+			return documents[i].DateCreated < documents[j].DateCreated
 		},
 	)
 }

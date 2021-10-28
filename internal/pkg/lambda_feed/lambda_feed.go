@@ -14,9 +14,12 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.APIGatewayProxyResponse, error) {
+func HandleRequest(_ctx context.Context, event util.FeedRequestBody) (*events.APIGatewayProxyResponse, error) {
+	ctx := context.Background()
+
 	// Load default AWS config, including AWS_REGION env var
 	cfg, err := config.LoadDefaultConfig(ctx)
+
 	if err != nil {
 		return util.InternalServerError(err, "GET"), err
 	}
@@ -24,10 +27,13 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.API
 	filters := event.Filters
 	util.SortFilters(filters)
 
+	fmt.Println(filters)
+
 	redisClient := util.ConnectToRedis()
 
 	// Attempt to get cached documents from Redis
 	redisKey := util.ConstructRedisKey(filters)
+
 	cachedDoc, err := redisClient.Get(ctx, redisKey).Result()
 
 	if err == nil && cachedDoc != "" {
@@ -56,10 +62,14 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.API
 		FilterExpression: expr.Condition(),
 	}
 
+	fmt.Println("ScanInput: ", scanInput)
+
 	scanOutput, err := client.Scan(ctx, scanInput)
 	if err != nil {
 		return util.InternalServerError(err, "GET"), err
 	}
+
+	fmt.Println("Scan Output: ", scanOutput)
 
 	// Convert response items to list of ImageDocument
 	documents := []util.ImageDocument{}
@@ -72,6 +82,8 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.API
 	// Sort documents by DateCreated, with latest first
 	util.SortDocuments(documents)
 
+	fmt.Println("Documents: ", documents)
+
 	// Convert documents to JSON
 	response, err := json.Marshal(documents)
 	if err != nil {
@@ -80,6 +92,8 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.API
 
 	// Convert JSON to string
 	responseStr := string(response)
+
+	fmt.Println("Response String: ", responseStr)
 
 	util.CacheJSONString(ctx, redisKey, responseStr, filters, redisClient)
 
