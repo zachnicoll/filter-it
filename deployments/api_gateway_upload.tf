@@ -9,7 +9,7 @@ resource "aws_api_gateway_resource" "uploadResource" {
 resource "aws_api_gateway_method" "uploadPostMethod" {
   rest_api_id   = aws_api_gateway_rest_api.lambda.id
   resource_id   = aws_api_gateway_resource.uploadResource.id
-  http_method   = "POST"
+  http_method   = "GET"
   authorization = "NONE"
 }
 
