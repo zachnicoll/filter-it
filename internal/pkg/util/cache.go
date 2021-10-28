@@ -12,9 +12,7 @@ import (
 func ConnectToRedis() *redis.Client {
 	redisHost := os.Getenv("AWS_REDIS_ADDRESS")
 	return redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:6379", redisHost),
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Addr: fmt.Sprintf("%s:6379", redisHost),
 	})
 }
 
