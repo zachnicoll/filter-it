@@ -1,3 +1,5 @@
+import { FileWithPath } from "react-dropzone";
+
 export enum Filter {
   GRAYSCALE,
   SEPIA,
@@ -21,6 +23,11 @@ export interface ImageDocument {
 }
 
 export interface UploadResponse {
-  image: string // S3 filename of image
-  url: string // S3 pre-sign URL
+  image: string; // S3 filename of image
+  url: string; // S3 pre-sign URL
+}
+
+export interface PreviewFileWithPath {
+  preview: string;
+  file: FileWithPath;
 }
