@@ -6,10 +6,10 @@ resource "aws_api_gateway_resource" "feedResource" {
 }
 
 // GET /feed
-resource "aws_api_gateway_method" "feedGetMethod" {
+resource "aws_api_gateway_method" "feedPostMethod" {
   rest_api_id   = aws_api_gateway_rest_api.lambda.id
   resource_id   = aws_api_gateway_resource.feedResource.id
-  http_method   = "GET"
+  http_method   = "POST"
   authorization = "NONE"
 
   request_parameters = {
@@ -20,14 +20,14 @@ resource "aws_api_gateway_method" "feedGetMethod" {
 resource "aws_api_gateway_method_response" "feedResponse" {
   rest_api_id = aws_api_gateway_rest_api.lambda.id
   resource_id = aws_api_gateway_resource.feedResource.id
-  http_method = aws_api_gateway_method.feedGetMethod.http_method
+  http_method = aws_api_gateway_method.feedPostMethod.http_method
   status_code = "200"
 }
 
 resource "aws_api_gateway_integration" "feedIntegration" {
   rest_api_id             = aws_api_gateway_rest_api.lambda.id
   resource_id             = aws_api_gateway_resource.feedResource.id
-  http_method             = aws_api_gateway_method.feedGetMethod.http_method
+  http_method             = aws_api_gateway_method.feedPostMethod.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.lambda_feed.invoke_arn
