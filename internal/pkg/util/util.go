@@ -66,5 +66,9 @@ func BuildFilterConditions(filters []int) (expression.Expression, error) {
 		builder = builder.WithCondition(condition)
 	}
 
+	// Make sure that only DONE documents are selected from DynamoDB
+	progressCondition := expression.Name("progress").Equal(expression.Value(DONE))
+	builder = builder.WithCondition(progressCondition)
+
 	return builder.Build()
 }
