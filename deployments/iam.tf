@@ -94,9 +94,13 @@ resource "aws_iam_policy" "lambda_exec_dynamodb" {
   "Statement": [
     {
       "Action": [
+        "dynamodb:BatchGetItem",
         "dynamodb:GetItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:BatchWriteItem",
         "dynamodb:PutItem",
-        "dynamodb:DeleteItem"
+        "dynamodb:UpdateItem"
       ],
       "Resource": "${aws_dynamodb_table.ddbtable.arn}",
       "Effect": "Allow"
@@ -109,6 +113,11 @@ EOF
 resource "aws_iam_role_policy_attachment" "lambda_policy" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "AWSLambdaVPCAccessExecutionRole" {
+  role       = aws_iam_role.lambda_exec_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_logs" {

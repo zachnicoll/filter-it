@@ -7,8 +7,8 @@ resource "aws_dynamodb_table" "ddbtable" {
   name           = var.dynamodb_name
   hash_key       = "id"
   range_key      = "date_created"
-  read_capacity  = 20
-  write_capacity = 20
+  read_capacity  = 5
+  write_capacity = 5
 
   attribute {
     name = "id"
@@ -34,8 +34,8 @@ resource "aws_dynamodb_table" "ddbtable" {
     name            = "ImageFiltersIndex"
     hash_key        = "filters"
     range_key       = "date_created"
-    read_capacity   = 20
-    write_capacity  = 20
+    read_capacity   = 5
+    write_capacity  = 5
     projection_type = "ALL"
   }
 

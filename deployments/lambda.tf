@@ -40,6 +40,11 @@ resource "aws_lambda_function" "lambda_feed" {
   function_name    = "filterit-lambda_feed"
   source_code_hash = data.archive_file.lambda_feed_zip.output_base64sha256
 
+  vpc_config {
+    subnet_ids         = ["subnet-56490931", "subnet-58e32700", "subnet-2592e06c"]
+    security_group_ids = ["sg-b9f38ec0"]
+  }
+
   environment {
     variables = {
       AWS_IMAGE_TABLE   = var.dynamodb_name
