@@ -30,6 +30,8 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 		filter = "_"
 	}
 
+	fmt.Println(filters)
+
 	redisClient := util.ConnectToRedis()
 
 	redisKey := filter
