@@ -7,6 +7,11 @@ resource "aws_lambda_function" "lambda_upload" {
   function_name    = "filterit-lambda_upload"
   source_code_hash = data.archive_file.lambda_upload_zip.output_base64sha256
 
+  vpc_config {
+    subnet_ids         = [aws_subnet.filterit-subnet-private-1.id]
+    security_group_ids = [aws_security_group.filterit-sg.id]
+  }
+
   environment {
     variables = {
       S3_BUCKET = var.image_bucket
@@ -29,6 +34,11 @@ resource "aws_lambda_function" "lambda_queue" {
       AWS_SQS_QUEUE   = var.sqs_name
     }
   }
+
+  vpc_config {
+    subnet_ids         = [aws_subnet.filterit-subnet-private-1.id]
+    security_group_ids = [aws_security_group.filterit-sg.id]
+  }
 }
 
 /* Lambda Feed*/
@@ -41,8 +51,8 @@ resource "aws_lambda_function" "lambda_feed" {
   source_code_hash = data.archive_file.lambda_feed_zip.output_base64sha256
 
   vpc_config {
-    subnet_ids         = ["subnet-56490931", "subnet-58e32700", "subnet-2592e06c"]
-    security_group_ids = ["sg-b9f38ec0"]
+    subnet_ids         = [aws_subnet.filterit-subnet-private-1.id]
+    security_group_ids = [aws_security_group.filterit-sg.id]
   }
 
   environment {
