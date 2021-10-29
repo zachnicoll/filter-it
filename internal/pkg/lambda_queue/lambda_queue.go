@@ -1,12 +1,15 @@
 package lambda_queue
 
 import (
+	"aws-scalable-image-filter/internal/pkg/util"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"net/http"
 	"os"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 
@@ -19,63 +22,30 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 )
 
-type QueueRequest struct {
-	Id string `json:"id,omitempty"`
-	Title  string `json:"title"`
-	Author string `json:"author"`
-	Filters []string `json:"filter"`
-	Image string `json:"image"`
-	Progress string `json:"progress,omitempty"`
-}
-
-type QueueResponse struct {
-	DocumentID string `json:"id"`
-}
-
-func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// JSON Parse Request Body
-	var requestBody QueueRequest
+	var requestBody util.ImageDocument
 	err := json.Unmarshal([]byte(request.Body), &requestBody)
 	if err != nil {
-		fmt.Println("Bad Request")
-
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       "Malformed Body",
-		}, nil
+		return util.InternalServerError(err, "POST"), nil
 	}
 
 	// Get DynamoDB Table
 	imageTable := os.Getenv("AWS_IMAGE_TABLE")
 	if imageTable == "" {
-		fmt.Println("Image Table was unable to be loaded from env vars.")
-
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Image Table ENV Variable Missing.",
-		}, nil
+		return util.InternalServerError(errors.New("Image Table was unable to be loaded from env vars."), "POST"), nil
 	}
 
 	// Get SQS Queue
 	sqsQueue := os.Getenv("AWS_SQS_QUEUE")
 	if sqsQueue == "" {
-		fmt.Println("SQS Queue was unable to be loaded from env vars.")
-
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "SQS Queue ENV Variable Missing.",
-		}, nil
+		return util.InternalServerError(errors.New("SQS Queue was unable to be loaded from env vars."), "POST"), nil
 	}
 
 	// Get AWS Region
 	awsRegion := os.Getenv("AWS_REGION")
 	if awsRegion == "" {
-		fmt.Println("AWS Region was unable to be loaded from env vars.")
-
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "AWS Region ENV Variable Missing.",
-		}, nil
+		return util.InternalServerError(errors.New("AWS Region was unable to be loaded from env vars"), "POST"), nil
 	}
 
 	// Initialise AWS Session Config
@@ -87,28 +57,20 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		SharedConfigState: session.SharedConfigEnable,
 	})
 	if err != nil {
-		fmt.Println("Unable to configure AWS Client.")
-
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Unable to configure AWS Client.",
-		}, nil
+		return util.InternalServerError(err, "POST"), nil
 	}
 
 	// Generate Document UUID and set Document Values
 	documentID := uuid.New()
 	requestBody.Id = documentID.String()
-	requestBody.Progress = "PROCESSING"
+	requestBody.Progress = util.PROCESSING
+	requestBody.DateCreated = time.Now().Unix()
+
 
 	// DynamoDB Marshal Values
 	imageQueueMap, err := dynamodbattribute.MarshalMap(requestBody)
 	if err != nil {
-		fmt.Println("Unable to marshal dynamodb fields.")
-
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Unable to marshal dynamodb fields.",
-		}, nil
+		return util.InternalServerError(err, "POST"), nil
 	}
 
 	// Start an AWS DB Session
@@ -123,47 +85,56 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	// Put DynamoDB Item
 	_, err = awsDBSession.PutItem(input)
 	if err != nil {
-		fmt.Println("Unable to write to dynamodb.")
-
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Unable to write to dynamodb.",
-		}, nil
+		return util.InternalServerError(err, "POST"), nil
 	}
 
 	// Start an AWS SQS Session
 	awsSQSSession := sqs.New(awsSessionConfig)
 
+	urlResult, err := awsSQSSession.GetQueueUrl(&sqs.GetQueueUrlInput{
+		QueueName: &sqsQueue,
+	})
+	if err != nil {
+		return util.InternalServerError(err, "POST"), nil
+	}
+
 	// Queue Image to SQS
 	_, err = awsSQSSession.SendMessage(&sqs.SendMessageInput{
 		MessageBody: aws.String(documentID.String()),
-		QueueUrl:    &sqsQueue,
+		QueueUrl:    urlResult.QueueUrl,
 	})
 	if err != nil {
-		fmt.Println("Unable to queue message to SQS.")
-
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Unable to queue message to SQS.",
-		}, nil
+		return util.InternalServerError(err, "POST"), nil
 	}
 
 	// Build and return JSON response
-	var queueResponse = &QueueResponse{
+	var queueResponse = &util.QueueResponse{
 		DocumentID: documentID.String(),
 	}
 	response, err := json.Marshal(queueResponse)
 	if err != nil {
-		fmt.Println("Unable to convert response to JSON.")
-
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Unable to convert response to JSON.",
-		}, nil
+		return util.InternalServerError(err, "POST"), nil
 	}
 
-	return &events.APIGatewayProxyResponse{
-		StatusCode: http.StatusOK,
-		Body: string(response),
-	}, nil
+	ctx := context.Background()
+	redisHost := os.Getenv("AWS_REDIS_ADDRESS")
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: fmt.Sprintf("%s:6379", redisHost),
+	})
+	ping, err := redisClient.Ping(ctx).Result()
+	if err != nil {
+		return util.InternalServerError(err, "POST"), nil
+	}
+	fmt.Println(ping)
+	err = redisClient.Set(ctx, "key", "value", 0).Err()
+	if err != nil {
+		return util.InternalServerError(err, "POST"), nil
+	}
+	keyting, err := redisClient.Get(ctx, "key").Result()
+	if err != nil {
+		return util.InternalServerError(err, "POST"), nil
+	}
+	fmt.Println(keyting)
+
+	return util.JSONStringResponse(string(response), "POST"), nil
 }

@@ -9,19 +9,27 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
-func InternalServerError(err error) *events.APIGatewayProxyResponse {
+func InternalServerError(err error, method string) *events.APIGatewayProxyResponse {
 	fmt.Println(err.Error())
 	return &events.APIGatewayProxyResponse{
+		Headers: map[string]string{
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Credentials": "true",
+			"Access-Control-Allow-Methods": method,
+		},
 		StatusCode: http.StatusInternalServerError,
 		Body:       err.Error(),
 	}
 }
 
-func JSONStringResponse(body string) *events.APIGatewayProxyResponse {
+func JSONStringResponse(body string, method string) *events.APIGatewayProxyResponse {
 	return &events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
 		Headers: map[string]string{
 			"Content-Type": "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Credentials": "true",
+			"Access-Control-Allow-Methods": method,
 		},
 		Body: body,
 	}
