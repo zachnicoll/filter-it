@@ -18,11 +18,15 @@ const (
 )
 
 type ImageDocument struct {
-	Id          string `json:"id"`
-	DateCreated int    `json:"date_created"`
-	Filters     []int  `json:"filters"`
-	Progress    int    `json:"progress"`
-	Title       string `json:"title"`
-	Author      string `json:"author"`
-	Image       string `json:"image"`
+	Id          string 	`json:"id,omitempty"`
+	DateCreated int64   `json:"date_created,omitempty"`
+	Filter     	int  	`json:"filter"`
+	Progress    int    	`json:"progress,omitempty"`
+	Title       string 	`json:"title"`
+	Author      string 	`json:"author"`
+	Image       string 	`json:"image"`
+}
+
+type QueueResponse struct {
+	DocumentID string `json:"id"`
 }

@@ -18,7 +18,7 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.API
 	// Load default AWS config, including AWS_REGION env var
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return util.InternalServerError(err), err
+		return util.InternalServerError(err, "GET"), err
 	}
 
 	filters := event.Filters
@@ -32,7 +32,7 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.API
 
 	if err == nil && cachedDoc != "" {
 		// Found a cached document for this query, return it
-		return util.JSONStringResponse(cachedDoc), nil
+		return util.JSONStringResponse(cachedDoc, "GET"), nil
 	} else if err != redis.Nil {
 		fmt.Printf("Failed to fetch cached document from Redis: %v\n", err.Error())
 
@@ -47,7 +47,7 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.API
 
 	expr, err := util.BuildFilterConditions(filters)
 	if err != nil {
-		return util.InternalServerError(err), err
+		return util.InternalServerError(err, "GET"), err
 	}
 
 	// Perform the scan with any conditions that may be present
@@ -58,7 +58,7 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.API
 
 	scanOutput, err := client.Scan(ctx, scanInput)
 	if err != nil {
-		return util.InternalServerError(err), err
+		return util.InternalServerError(err, "GET"), err
 	}
 
 	// Convert response items to list of ImageDocument
@@ -66,7 +66,7 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.API
 
 	err = attributevalue.UnmarshalListOfMaps(scanOutput.Items, &documents)
 	if err != nil {
-		return util.InternalServerError(err), err
+		return util.InternalServerError(err, "GET"), err
 	}
 
 	// Sort documents by DateCreated, with latest first
@@ -75,7 +75,7 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.API
 	// Convert documents to JSON
 	response, err := json.Marshal(documents)
 	if err != nil {
-		return util.InternalServerError(err), err
+		return util.InternalServerError(err, "GET"), err
 	}
 
 	// Convert JSON to string
@@ -83,5 +83,5 @@ func HandleRequest(ctx context.Context, event util.FeedRequestBody) (*events.API
 
 	util.CacheJSONString(ctx, redisKey, responseStr, filters, redisClient)
 
-	return util.JSONStringResponse(responseStr), nil
+	return util.JSONStringResponse(responseStr, "GET"), nil
 }
