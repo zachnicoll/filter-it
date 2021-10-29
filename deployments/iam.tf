@@ -51,7 +51,8 @@ resource "aws_iam_policy" "lambda_exec_sqs" {
   "Statement": [
     {
       "Action": [
-        "sqs:SendMessage"
+        "sqs:SendMessage",
+        "sqs:GetQueueUrl"
       ],
       "Resource": "${aws_sqs_queue.filterit-queue.arn}",
       "Effect": "Allow"
