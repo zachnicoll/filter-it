@@ -32,6 +32,7 @@ resource "aws_lambda_function" "lambda_queue" {
     variables = {
       AWS_IMAGE_TABLE = var.dynamodb_name
       AWS_SQS_QUEUE   = var.sqs_name
+      AWS_REDIS_ADDRESS = element(aws_elasticache_cluster.redis.cache_nodes, 0).address
     }
   }
 
