@@ -2,14 +2,15 @@ import styled from "@emotion/styled";
 import theme from "../../styles/colors";
 
 export const UploadWrapper = styled.div`
-  width: 40%;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 600px;
   padding: 10px;
-  background-color: #fafafa;
+  background-color: ${theme.white};
   border-width: 2px;
   border-radius: 1px;
   border-color: ${theme.border};
   border-style: solid;
+  align-self: center;
 `;
 
 export const Img = styled.img`
@@ -19,14 +20,13 @@ export const Img = styled.img`
   margin: auto;
 `;
 
-export const Container = styled.div`
+export const Container = styled.div<{ active?: boolean }>`
   align-items: center;
   border-width: 2px;
   border-radius: 2px;
-  border-color: #eeeeee;
+  background-color: ${({ active }) => (active ? theme.accent : theme.white)};
   border-style: dashed;
   padding: 10px;
-  background-color: #fafafa;
   color: ${theme.secondary};
   outline: none;
   text-align: center;
@@ -42,18 +42,23 @@ export const FormRow = styled.div`
   display: flex;
   flex-direction: row;
   margin-bottom: 5px;
+  flex: 1;
+  align-items: center;
+  flex-wrap: wrap;
 `;
 
 export const FormArea = styled.div`
   margin: 10px 0px;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  flex: 1;
 `;
 
 export const FormBox = styled.div`
   display: flex;
   flex-direction: column;
-  margin-bottom: 5px;
+  margin: 5px;
+  flex: 1;
 `;
 
 export const FormLabel = styled.label<{ emphasized?: boolean }>`
@@ -67,26 +72,25 @@ export const FormCheckBoxInput = styled.input`
   margin-right: 5px;
 `;
 
-export const FormButtonWrapper = styled.div`
-  margin-left: auto;
-  display: flex;
-`;
-
 export const FormButton = styled.button`
-  align-self: flex-end;
   border: 0;
   border-radius: 0.25rem;
   font-size: 1rem;
   line-height: 1.2;
   white-space: nowrap;
   text-decoration: none;
-  padding: 0.25rem 0.5rem;
-  margin: 0.25rem;
+  padding: 0.5rem;
   cursor: pointer;
   color: ${theme.primary};
 
   &:hover {
-    background: ${theme.border};
-    color: #fff;
+    background: ${theme.primary};
+    color: ${theme.white};
   }
+`;
+
+export const Input = styled.input`
+  border: 1px solid ${theme.border};
+  border-radius: 0.5em;
+  padding: 0.25em 0.5em;
 `;

@@ -14,6 +14,8 @@ const theme = {
   accent: colors.hotBlue,
   primary: colors.purple,
   secondary: colors.greyPurple,
+  white: colors.white,
+  black: colors.black,
 };
 
 export default theme;

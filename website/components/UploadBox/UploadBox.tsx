@@ -1,28 +1,17 @@
-import React, { createRef, useContext, useState } from "react";
+import React, { createRef, useState } from "react";
 import { DropzoneRef, FileWithPath, useDropzone } from "react-dropzone";
 import { Filter, PreviewFileWithPath } from "../../api/types";
 import API from "../../api";
 import { toastError } from "../../common/toast";
-
-import {
-  Container,
-  FormColumn,
-  Img,
-  UploadWrapper,
-  FormLabel,
-  FormArea,
-  FormBox,
-  FormButton,
-  FormButtonWrapper,
-  FormCheckBoxInput,
-  FormRow,
-} from "./UploadBox.styles";
-import { filterStringMap } from "../../common/enum.maps";
-import { capitalize } from "@material-ui/core";
-import { ProgressContext } from "../../hooks/useProgress";
+import * as Styles from "./UploadBox.styles";
+import { filterRadioButtons } from "common/util";
+import { DragNDrop } from "./molecules/DragNDrop";
+import { useUploadImage } from "hooks/useUploadImage";
+import { Spinner } from "components";
 
 export const UploadBox = () => {
-  const { dispatch, state } = useContext(ProgressContext);
+  const {upload, uploading} = useUploadImage();
+
   const dropzoneRef = createRef<DropzoneRef>();
   const [file, setFile] = useState<PreviewFileWithPath>();
 
@@ -30,152 +19,112 @@ export const UploadBox = () => {
   const [title, setTitle] = useState<string | undefined>(undefined);
   const [filter, setFilter] = useState<Filter | undefined>(undefined);
 
-  const { getRootProps, getInputProps } = useDropzone({
+  const handleDrop = (files: FileWithPath[]) => {
+    if (files.length === 0) {
+      toastError(
+        "Only .jpg and .jpeg files are supported!",
+        new Error("Unsupported image type")
+      );
+    }
+
+    if (files[0]) {
+      setFile({
+        preview: URL.createObjectURL(files[0]),
+        file: files[0],
+      });
+    }
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     maxFiles: 1,
     accept: [".jpg", ".jpeg"],
-    // @ts-ignore
-    onDrop: (prop: FileWithPath[]) => {
-      if (prop[0]) {
-        setFile({
-          preview: URL.createObjectURL(prop[0]),
-          file: prop[0],
-        });
-      }
-    },
+    onDrop: handleDrop,
   });
 
-  const UploadImage = () => {
+  const uploadImage = async () => {
     if (file && author && title && filter) {
-      API.upload
-        .get()
-        .then((uploadResponse) => {
-          const url = decodeURIComponent(uploadResponse.url);
-          API.s3
-            .put(url, file.file)
-            .then((s3Response) => {
-              if (s3Response == 200) {
-                API.queue
-                  .post({
-                    author,
-                    title,
-                    image: uploadResponse.image,
-                    filter: filter,
-                  })
-                  .then((response) => {
-                    dispatch({
-                      type: "UPDATE_IMAGE",
-                      payload: response.documentID,
-                    });
-                  })
-                  .catch((error) => {
-                    toastError(
-                      "Image Upload Failed. Please try again later.",
-                      error
-                    );
-                  });
-              } else {
-                toastError(
-                  "Image Upload Failed. Please try again later.",
-                  new Error("S3 failed to upload.")
-                );
-              }
-            })
-            .catch((error) => {
-              toastError("Image Upload Failed. Please try again later.", error);
-            });
-        })
-        .catch((error) => {
-          toastError("Image Upload Failed. Please try again later.", error);
-        });
+      await upload(author, title, filter, file);
     } else {
       toastError("All Fields Required!", new Error("Empty Upload Fields"));
     }
   };
 
-  const openDialog = () => {
+  const handleOpenDialog = () => {
     if (dropzoneRef.current) {
       dropzoneRef.current.open();
     }
   };
 
   return (
-    <UploadWrapper>
+    <Styles.UploadWrapper>
       {!file ? (
-        <Container {...getRootProps()}>
-          <input {...getInputProps()} />
-          <p>
-            Drag &apos;n&apos; drop some files here, or click to select files
-          </p>
-          <br />
-          <button type="button" onClick={openDialog}>
-            Open File Dialog
-          </button>
-        </Container>
+        <DragNDrop
+          getInputProps={getInputProps}
+          getRootProps={getRootProps}
+          openDialog={handleOpenDialog}
+          dragActive={isDragActive}
+        />
       ) : (
         <>
-          <Container {...getRootProps()}>
+          <Styles.Container {...getRootProps()}>
             <input {...getInputProps()} />
-            <div onClick={openDialog}>
-              <Img src={file.preview} />
+            <div onClick={handleOpenDialog}>
+              {uploading ? <Spinner type="Oval"/> : <Styles.Img src={file.preview} />}
             </div>
-          </Container>
-          <FormArea>
-            <FormColumn>
-              <FormBox>
-                <FormLabel emphasized>Title</FormLabel>
-                <input
+          </Styles.Container>
+
+          <Styles.FormArea>
+            <Styles.FormRow>
+              <Styles.FormBox>
+                <Styles.FormLabel emphasized>Title</Styles.FormLabel>
+
+                <Styles.Input
                   value={title}
                   onChange={(event) => {
                     event.preventDefault();
                     setTitle(event.target.value);
                   }}
+                  placeholder="My Beautiful Filtered Image"
                 />
+              </Styles.FormBox>
 
-                <FormLabel emphasized>Author</FormLabel>
-                <input
+              <Styles.FormBox>
+                <Styles.FormLabel emphasized>Author</Styles.FormLabel>
+
+                <Styles.Input
                   value={author}
                   onChange={(event) => {
                     event.preventDefault();
                     setAuthor(event.target.value);
                   }}
+                  placeholder="Zadi Nailey"
                 />
-              </FormBox>
-            </FormColumn>
-            <FormColumn>
-              <FormLabel emphasized>Filters</FormLabel>
-              <FormBox>
-                <FormRow>
-                  <FormCheckBoxInput
-                    type="radio"
-                    name="filter"
-                    onChange={() => setFilter(Filter.GRAYSCALE)}
-                  />
-                  <FormLabel>Grayscale</FormLabel>
-                </FormRow>
-                <FormRow>
-                  <FormCheckBoxInput
-                    type="radio"
-                    name="filter"
-                    onChange={() => setFilter(Filter.SEPIA)}
-                  />
-                  <FormLabel>Sepia</FormLabel>
-                </FormRow>
-                <FormRow>
-                  <FormCheckBoxInput
-                    type="radio"
-                    name="filter"
-                    onChange={() => setFilter(Filter.INVERT)}
-                  />
-                  <FormLabel>Invert</FormLabel>
-                </FormRow>
-              </FormBox>
-            </FormColumn>
-            <FormButtonWrapper>
-              <FormButton onClick={UploadImage}>Upload Image</FormButton>
-            </FormButtonWrapper>
-          </FormArea>
+              </Styles.FormBox>
+            </Styles.FormRow>
+
+            <Styles.FormColumn>
+              <Styles.FormLabel emphasized>Select Filter</Styles.FormLabel>
+
+              <Styles.FormRow>
+                {filterRadioButtons.map((radioBtnValue) => (
+                  <Styles.FormRow key={radioBtnValue.value}>
+                    <Styles.FormCheckBoxInput
+                      type="radio"
+                      name="filter"
+                      onChange={() => setFilter(radioBtnValue.value)}
+                    />
+                    <Styles.FormLabel>{radioBtnValue.label}</Styles.FormLabel>
+                  </Styles.FormRow>
+                ))}
+              </Styles.FormRow>
+            </Styles.FormColumn>
+
+            <Styles.FormButton onClick={uploadImage}>
+              Upload Image
+            </Styles.FormButton>
+          </Styles.FormArea>
         </>
       )}
-    </UploadWrapper>
+    </Styles.UploadWrapper>
   );
 };

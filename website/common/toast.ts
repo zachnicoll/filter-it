@@ -1,3 +1,4 @@
+import { ReactText } from "react";
 import { toast, ToastOptions } from "react-toastify";
 import theme from "styles/colors";
 
@@ -16,7 +17,20 @@ const defaultToastOptions: ToastOptions = {
   },
 };
 
-export const toastError = (msg: string, err: Error): void => {
+export const toastError = (msg: string, err: Error): ReactText => {
   console.error(err);
-  toast(msg, defaultToastOptions);
+  return toast(msg, defaultToastOptions);
+};
+
+export const toastUpdate = (msg: string): void => {
+  toast.dismiss();
+  toast.update(msg, {
+    ...defaultToastOptions,
+    type: toast.TYPE.SUCCESS,
+  });
+};
+
+export const toastLoading = (msg: string): ReactText => {
+  toast.dismiss();
+  return toast.loading("Processing Image...", defaultToastOptions);
 };
