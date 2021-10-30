@@ -9,9 +9,9 @@ resource "aws_api_gateway_rest_api" "lambda" {
 
 resource "aws_api_gateway_deployment" "deployment" {
   depends_on = [
-    aws_api_gateway_method.feedPostMethod,
+    aws_api_gateway_method.feedGetMethod,
     aws_api_gateway_method.queuePostMethod,
-    aws_api_gateway_method.uploadPostMethod,
+    aws_api_gateway_method.uploadGetMethod,
     aws_api_gateway_integration.queueIntegration,
     aws_api_gateway_integration.uploadIntegration,
     aws_api_gateway_integration.feedIntegration

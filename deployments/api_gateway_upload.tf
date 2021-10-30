@@ -6,7 +6,7 @@ resource "aws_api_gateway_resource" "uploadResource" {
   path_part   = "upload"
 }
 
-resource "aws_api_gateway_method" "uploadPostMethod" {
+resource "aws_api_gateway_method" "uploadGetMethod" {
   rest_api_id   = aws_api_gateway_rest_api.lambda.id
   resource_id   = aws_api_gateway_resource.uploadResource.id
   http_method   = "GET"
@@ -16,14 +16,14 @@ resource "aws_api_gateway_method" "uploadPostMethod" {
 resource "aws_api_gateway_method_response" "uploadResponse" {
   rest_api_id = aws_api_gateway_rest_api.lambda.id
   resource_id = aws_api_gateway_resource.uploadResource.id
-  http_method = aws_api_gateway_method.uploadPostMethod.http_method
+  http_method = aws_api_gateway_method.uploadGetMethod.http_method
   status_code = "200"
 }
 
 resource "aws_api_gateway_integration" "uploadIntegration" {
   rest_api_id             = aws_api_gateway_rest_api.lambda.id
   resource_id             = aws_api_gateway_resource.uploadResource.id
-  http_method             = aws_api_gateway_method.uploadPostMethod.http_method
+  http_method             = aws_api_gateway_method.uploadGetMethod.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.lambda_upload.invoke_arn
@@ -34,7 +34,7 @@ resource "aws_api_gateway_integration_response" "uploadIntResponse" {
 
   rest_api_id = aws_api_gateway_rest_api.lambda.id
   resource_id = aws_api_gateway_resource.uploadResource.id
-  http_method = aws_api_gateway_method.uploadPostMethod.http_method
+  http_method = aws_api_gateway_method.uploadGetMethod.http_method
   status_code = aws_api_gateway_method_response.uploadResponse.status_code
 }
 
