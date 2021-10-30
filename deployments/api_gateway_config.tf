@@ -14,7 +14,7 @@ resource "aws_api_gateway_deployment" "deployment" {
     aws_api_gateway_method.uploadPostMethod,
     aws_api_gateway_integration.queueIntegration,
     aws_api_gateway_integration.uploadIntegration,
-    aws_api_gateway_integration.feedGetIntegration
+    aws_api_gateway_integration.feedIntegration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.lambda.id

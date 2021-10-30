@@ -23,7 +23,7 @@ resource "aws_dynamodb_table" "ddbtable" {
   }
 
   attribute {
-    name = "filters"
+    name = "filter"
 
     // Will be a list of filter enumerations
     type = "N"
@@ -31,8 +31,8 @@ resource "aws_dynamodb_table" "ddbtable" {
 
   # Make the filters array an index, so we can query by filter
   global_secondary_index {
-    name            = "ImageFiltersIndex"
-    hash_key        = "filters"
+    name            = "filter-date_create-index"
+    hash_key        = "filter"
     range_key       = "date_created"
     read_capacity   = 5
     write_capacity  = 5
