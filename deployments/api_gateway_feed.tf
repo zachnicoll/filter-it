@@ -11,16 +11,20 @@ resource "aws_api_gateway_method" "feedGetMethod" {
   resource_id   = aws_api_gateway_resource.feedResource.id
   http_method   = "GET"
   authorization = "NONE"
+
+  request_parameters = {
+    "method.request.querystring.filter" = false
+  }
 }
 
-resource "aws_api_gateway_method_response" "feedGetResponse" {
+resource "aws_api_gateway_method_response" "feedResponse" {
   rest_api_id = aws_api_gateway_rest_api.lambda.id
   resource_id = aws_api_gateway_resource.feedResource.id
   http_method = aws_api_gateway_method.feedGetMethod.http_method
   status_code = "200"
 }
 
-resource "aws_api_gateway_integration" "feedGetIntegration" {
+resource "aws_api_gateway_integration" "feedIntegration" {
   rest_api_id             = aws_api_gateway_rest_api.lambda.id
   resource_id             = aws_api_gateway_resource.feedResource.id
   http_method             = aws_api_gateway_method.feedGetMethod.http_method
@@ -29,13 +33,13 @@ resource "aws_api_gateway_integration" "feedGetIntegration" {
   uri                     = aws_lambda_function.lambda_feed.invoke_arn
 }
 
-resource "aws_api_gateway_integration_response" "feedGetIntResponse" {
-  depends_on = [aws_api_gateway_integration.feedGetIntegration]
+resource "aws_api_gateway_integration_response" "feedIntResponse" {
+  depends_on = [aws_api_gateway_integration.feedIntegration]
 
   rest_api_id = aws_api_gateway_rest_api.lambda.id
   resource_id = aws_api_gateway_resource.feedResource.id
   http_method = aws_api_gateway_method.feedGetMethod.http_method
-  status_code = aws_api_gateway_method_response.feedGetResponse.status_code
+  status_code = aws_api_gateway_method_response.feedResponse.status_code
 }
 
 resource "aws_api_gateway_method_settings" "feedMethodSettings" {
