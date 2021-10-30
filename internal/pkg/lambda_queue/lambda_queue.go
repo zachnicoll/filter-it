@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"os"
 	"time"
@@ -115,26 +113,6 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	if err != nil {
 		return util.InternalServerError(err, "POST"), nil
 	}
-
-	ctx := context.Background()
-	redisHost := os.Getenv("AWS_REDIS_ADDRESS")
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("%s:6379", redisHost),
-	})
-	ping, err := redisClient.Ping(ctx).Result()
-	if err != nil {
-		return util.InternalServerError(err, "POST"), nil
-	}
-	fmt.Println(ping)
-	err = redisClient.Set(ctx, "key", "value", 0).Err()
-	if err != nil {
-		return util.InternalServerError(err, "POST"), nil
-	}
-	keyting, err := redisClient.Get(ctx, "key").Result()
-	if err != nil {
-		return util.InternalServerError(err, "POST"), nil
-	}
-	fmt.Println(keyting)
 
 	return util.JSONStringResponse(string(response), "POST"), nil
 }
