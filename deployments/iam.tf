@@ -103,7 +103,10 @@ resource "aws_iam_policy" "lambda_exec_dynamodb" {
         "dynamodb:PutItem",
         "dynamodb:UpdateItem"
       ],
-      "Resource": "${aws_dynamodb_table.ddbtable.arn}",
+      "Resource": [
+        "${aws_dynamodb_table.ddbtable.arn}",
+        "${aws_dynamodb_table.ddbtable.arn}/index/*"
+      ],
       "Effect": "Allow"
     }
   ]
