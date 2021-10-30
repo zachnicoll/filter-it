@@ -67,7 +67,7 @@ func BuildFilterConditions(filter string) (expression.Expression, error) {
 	filterInt, err := strconv.Atoi(filter)
 
 	if err == nil {
-		filterCondition := expression.Name("filters").Equal(expression.Value(filterInt))
+		filterCondition := expression.Name("filter").Equal(expression.Value(filterInt))
 		builder = builder.WithCondition(filterCondition)
 	}
 

@@ -15,6 +15,7 @@ require (
 require (
 	github.com/aws/aws-sdk-go-v2 v1.10.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.5.0 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.2.6 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.7.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.0.7 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.2.5 // indirect

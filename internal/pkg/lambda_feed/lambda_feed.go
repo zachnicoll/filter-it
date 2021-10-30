@@ -10,7 +10,10 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -49,39 +52,60 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 
 	// Scan DynamoDB table to retrieve ALL documents
 	tableName := os.Getenv("AWS_IMAGE_TABLE")
-
-	expr, err := util.BuildFilterConditions(filter)
-	if err != nil {
-		return util.InternalServerError(err, "GET"), err
-	}
-
-	// Perform the scan with any conditions that may be present
-	scanInput := &dynamodb.ScanInput{
-		TableName:        &tableName,
-		FilterExpression: expr.Condition(),
-	}
-
-	fmt.Println("ScanInput: ", scanInput)
-
-	scanOutput, err := client.Scan(ctx, scanInput)
-	if err != nil {
-		return util.InternalServerError(err, "GET"), err
-	}
-
-	fmt.Println("Scan Output: ", scanOutput)
-
-	// Convert response items to list of ImageDocument
 	documents := []util.ImageDocument{}
 
-	err = attributevalue.UnmarshalListOfMaps(scanOutput.Items, &documents)
-	if err != nil {
-		return util.InternalServerError(err, "GET"), err
+	if filter == "_" {
+		filt := expression.Name("progress").Equal(expression.Value(util.DONE))
+		expr, err := expression.NewBuilder().WithFilter(filt).Build()
+
+		if err != nil {
+			return util.InternalServerError(err, "GET"), err
+		}
+
+		// Perform the scan with any conditions that may be present
+		scanInput := &dynamodb.ScanInput{
+			TableName:                 &tableName,
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+			FilterExpression:          expr.Filter(),
+			ProjectionExpression:      expr.Projection(),
+		}
+
+		scanOutput, err := client.Scan(ctx, scanInput)
+		if err != nil {
+			return util.InternalServerError(err, "GET"), err
+		}
+
+		// Convert response items to list of ImageDocument
+		err = attributevalue.UnmarshalListOfMaps(scanOutput.Items, &documents)
+		if err != nil {
+			return util.InternalServerError(err, "GET"), err
+		}
+	} else {
+		indexName := "tag-date_created-index"
+		queryInput := &dynamodb.QueryInput{
+			TableName: &tableName,
+			IndexName: &indexName,
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":f": &types.AttributeValueMemberN{Value: filter},
+			},
+			KeyConditionExpression: aws.String("tag = :f"),
+		}
+
+		queryOutput, err := client.Query(ctx, queryInput)
+		if err != nil {
+			return util.InternalServerError(err, "GET"), err
+		}
+
+		// Convert response items to list of ImageDocument
+		err = attributevalue.UnmarshalListOfMaps(queryOutput.Items, &documents)
+		if err != nil {
+			return util.InternalServerError(err, "GET"), err
+		}
 	}
 
 	// Sort documents by DateCreated, with latest first
 	util.SortDocuments(documents)
-
-	fmt.Println("Documents: ", documents)
 
 	// Convert documents to JSON
 	response, err := json.Marshal(documents)
