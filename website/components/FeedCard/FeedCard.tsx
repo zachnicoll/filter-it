@@ -19,7 +19,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({ image }) => {
         <Styles.Author>{image.author}</Styles.Author>
 
         <Styles.Tag>
-          {image.filters.map((filter) => filterStringMap[filter]).join(", ")}
+          {filterStringMap[image.tag]}
         </Styles.Tag>
       </Styles.Info>
     </Styles.Container>

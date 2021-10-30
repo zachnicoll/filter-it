@@ -4,7 +4,7 @@ import React from "react";
 import Head from "next/head";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
-import { ProgressContextProvider } from "../hooks/useProgress";
+import { ProgressProvider } from "context";
 
 function App({ Component, pageProps }: AppProps) {
   return (
@@ -27,9 +27,10 @@ function App({ Component, pageProps }: AppProps) {
       </Head>
 
       <ToastContainer />
-      <ProgressContextProvider>
+
+      <ProgressProvider>
         <Component {...pageProps} />
-      </ProgressContextProvider>
+      </ProgressProvider>
     </>
   );
 }

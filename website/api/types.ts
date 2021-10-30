@@ -17,7 +17,7 @@ export interface ImageDocument {
   id: string; // UUID to identify document
   title: string; // Title of art piece
   author: string; // Author of art piece
-  filter: Filter; // List of filters to be applied/have been applied to the image
+  tag: Filter; // Filter that has been applied
   progress: Progress; // Current progress of image processing in SQS
   image: string; // S3 filename of image related to this document
 }
@@ -31,3 +31,15 @@ export interface PreviewFileWithPath {
   preview: string;
   file: FileWithPath;
 }
+
+export interface QueueRequestBody {
+  title: string;
+  author: string;
+  image: string;
+  tag: Filter;
+}
+
+export interface QueueResponse {
+  documentID: string;
+}
+

@@ -1,28 +1,18 @@
 import axiosInstance from "common/axiosInstance";
-import { Filter } from "./types";
+import { QueueRequestBody, QueueResponse } from "./types";
 
-interface QueueParams {
-  title: string;
-  author: string;
-  image: string;
-  filter: Filter;
-}
-
-interface QueueResponse {
-  documentID: string;
-}
-
-export const post = async (props: QueueParams): Promise<QueueResponse> => {
-  const { title, author, filter, image } = props;
+export const post = async (params: QueueRequestBody): Promise<QueueResponse> => {
+  const { title, author, tag, image } = params;
 
   const res = await axiosInstance.post<QueueResponse>(
     "/queue",
     JSON.stringify({
-      title: title,
-      author: author,
-      filter: filter,
-      image: image,
+      title,
+      author,
+      tag,
+      image,
     })
   );
+
   return res.data;
 };
