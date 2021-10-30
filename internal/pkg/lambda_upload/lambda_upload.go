@@ -1,9 +1,10 @@
 package lambda_upload
 
 import (
+	"aws-scalable-image-filter/internal/pkg/util"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"time"
@@ -27,33 +28,13 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 	// Get S3 Bucket Name
 	s3Bucket := os.Getenv("S3_BUCKET")
 	if s3Bucket == "" {
-		fmt.Println("S3 bucket was unable to be loaded from env vars.")
-
-		return &events.APIGatewayProxyResponse{
-			Headers: map[string]string{
-				"Access-Control-Allow-Origin": "*",
-				"Access-Control-Allow-Credentials": "true",
-				"Access-Control-Allow-Methods": "GET",
-			},
-			StatusCode: http.StatusInternalServerError,
-			Body:       "S3 Bucket ENV Variable Missing.",
-		}, nil
+		return util.InternalServerError(errors.New("S3 Bucket was unable to be loaded from env vars")), nil
 	}
 
 	// Get AWS Region
 	awsRegion := os.Getenv("AWS_REGION")
 	if awsRegion == "" {
-		fmt.Println("AWS Region was unable to be loaded from env vars.")
-
-		return &events.APIGatewayProxyResponse{
-			Headers: map[string]string{
-				"Access-Control-Allow-Origin": "*",
-				"Access-Control-Allow-Credentials": "true",
-				"Access-Control-Allow-Methods": "GET",
-			},
-			StatusCode: http.StatusInternalServerError,
-			Body:       "AWS Region ENV Variable Missing.",
-		}, nil
+		return util.InternalServerError(errors.New("AWS Region was unable to be loaded from env vars")), nil
 	}
 
 	// Initialise AWS Session Config
@@ -65,17 +46,7 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 		SharedConfigState: session.SharedConfigEnable,
 	})
 	if err != nil {
-		fmt.Println("Unable to configure AWS Client.")
-
-		return &events.APIGatewayProxyResponse{
-			Headers: map[string]string{
-				"Access-Control-Allow-Origin": "*",
-				"Access-Control-Allow-Credentials": "true",
-				"Access-Control-Allow-Methods": "GET",
-			},
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Unable to configure AWS Client.",
-		}, nil
+		return util.InternalServerError(err), nil
 	}
 
 	// Start an AWS Session
@@ -94,17 +65,7 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 	// Fetch S3 pre-sign URL from put request
 	presignURL, err := s3PutRequest.Presign(15 * time.Minute)
 	if err != nil {
-		fmt.Println("Unable to generate pre-sign URL.")
-
-		return &events.APIGatewayProxyResponse{
-			Headers: map[string]string{
-				"Access-Control-Allow-Origin": "*",
-				"Access-Control-Allow-Credentials": "true",
-				"Access-Control-Allow-Methods": "GET",
-			},
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Unable to generate pre-sign URL.",
-		}, nil
+		return util.InternalServerError(err), nil
 	}
 
 	// URL escape format
@@ -117,27 +78,8 @@ func HandleRequest() (*events.APIGatewayProxyResponse, error) {
 	}
 	response, err := json.Marshal(uploadResponse)
 	if err != nil {
-		fmt.Println("Unable to convert response to JSON.")
-
-		return &events.APIGatewayProxyResponse{
-			Headers: map[string]string{
-				"Access-Control-Allow-Origin": "*",
-				"Access-Control-Allow-Credentials": "true",
-				"Access-Control-Allow-Methods": "GET",
-			},
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Unable to convert response to JSON.",
-		}, nil
+		return util.InternalServerError(err), nil
 	}
 
-	return &events.APIGatewayProxyResponse{
-		StatusCode: http.StatusOK,
-		Headers: map[string]string{
-			"Content-Type": "application/json",
-			"Access-Control-Allow-Origin": "*",
-			"Access-Control-Allow-Credentials": "true",
-			"Access-Control-Allow-Methods": "GET",
-		},
-		Body: string(response),
-	}, nil
+	return util.JSONStringResponse(string(response)), nil
 }

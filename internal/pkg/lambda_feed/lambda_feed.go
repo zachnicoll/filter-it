@@ -24,7 +24,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	cfg, err := config.LoadDefaultConfig(ctx)
 
 	if err != nil {
-		return util.InternalServerError(err, "GET"), err
+		return util.InternalServerError(err), err
 	}
 	filter := request.QueryStringParameters["filter"]
 
@@ -40,7 +40,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 
 	if err == nil && cachedDoc != "" {
 		// Found a cached document for this query, return it
-		return util.JSONStringResponse(cachedDoc, "GET"), nil
+		return util.JSONStringResponse(cachedDoc), nil
 	} else if err != redis.Nil {
 		fmt.Printf("Failed to fetch cached document from Redis: %v\n", err.Error())
 
@@ -59,7 +59,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 		expr, err := expression.NewBuilder().WithFilter(filt).Build()
 
 		if err != nil {
-			return util.InternalServerError(err, "GET"), err
+			return util.InternalServerError(err), err
 		}
 
 		// Perform the scan with any conditions that may be present
@@ -73,13 +73,13 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 
 		scanOutput, err := client.Scan(ctx, scanInput)
 		if err != nil {
-			return util.InternalServerError(err, "GET"), err
+			return util.InternalServerError(err), err
 		}
 
 		// Convert response items to list of ImageDocument
 		err = attributevalue.UnmarshalListOfMaps(scanOutput.Items, &documents)
 		if err != nil {
-			return util.InternalServerError(err, "GET"), err
+			return util.InternalServerError(err), err
 		}
 	} else {
 		indexName := "tag-date_created-index"
@@ -94,13 +94,13 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 
 		queryOutput, err := client.Query(ctx, queryInput)
 		if err != nil {
-			return util.InternalServerError(err, "GET"), err
+			return util.InternalServerError(err), err
 		}
 
 		// Convert response items to list of ImageDocument
 		err = attributevalue.UnmarshalListOfMaps(queryOutput.Items, &documents)
 		if err != nil {
-			return util.InternalServerError(err, "GET"), err
+			return util.InternalServerError(err), err
 		}
 	}
 
@@ -110,7 +110,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	// Convert documents to JSON
 	response, err := json.Marshal(documents)
 	if err != nil {
-		return util.InternalServerError(err, "GET"), err
+		return util.InternalServerError(err), err
 	}
 
 	// Convert JSON to string
@@ -118,5 +118,5 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 
 	util.CacheJSONString(ctx, redisKey, responseStr, redisClient)
 
-	return util.JSONStringResponse(responseStr, "GET"), nil
+	return util.JSONStringResponse(responseStr), nil
 }

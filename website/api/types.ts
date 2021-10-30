@@ -17,7 +17,7 @@ export interface ImageDocument {
   id: string; // UUID to identify document
   title: string; // Title of art piece
   author: string; // Author of art piece
-  filters: Filter[]; // List of filters to be applied/have been applied to the image
+  filter: Filter; // List of filters to be applied/have been applied to the image
   progress: Progress; // Current progress of image processing in SQS
   image: string; // S3 filename of image related to this document
 }
