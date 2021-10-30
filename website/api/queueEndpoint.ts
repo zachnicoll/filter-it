@@ -5,7 +5,7 @@ interface QueueParams {
   title: string;
   author: string;
   image: string;
-  filter: Filter[];
+  filter: Filter;
 }
 
 interface QueueResponse {
@@ -15,11 +15,14 @@ interface QueueResponse {
 export const post = async (props: QueueParams): Promise<QueueResponse> => {
   const { title, author, filter, image } = props;
 
-  const res = await axiosInstance.post<QueueResponse>("/queue", {
-    title: title,
-    author: author,
-    filter: filter,
-    image: image,
-  });
+  const res = await axiosInstance.post<QueueResponse>(
+    "/queue",
+    JSON.stringify({
+      title: title,
+      author: author,
+      filter: filter,
+      image: image,
+    })
+  );
   return res.data;
 };

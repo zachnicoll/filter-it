@@ -25,25 +25,25 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	var requestBody util.ImageDocument
 	err := json.Unmarshal([]byte(request.Body), &requestBody)
 	if err != nil {
-		return util.InternalServerError(err, "POST"), nil
+		return util.InternalServerError(err), nil
 	}
 
 	// Get DynamoDB Table
 	imageTable := os.Getenv("AWS_IMAGE_TABLE")
 	if imageTable == "" {
-		return util.InternalServerError(errors.New("Image Table was unable to be loaded from env vars."), "POST"), nil
+		return util.InternalServerError(errors.New("Image Table was unable to be loaded from env vars.")), nil
 	}
 
 	// Get SQS Queue
 	sqsQueue := os.Getenv("AWS_SQS_QUEUE")
 	if sqsQueue == "" {
-		return util.InternalServerError(errors.New("SQS Queue was unable to be loaded from env vars."), "POST"), nil
+		return util.InternalServerError(errors.New("SQS Queue was unable to be loaded from env vars.")), nil
 	}
 
 	// Get AWS Region
 	awsRegion := os.Getenv("AWS_REGION")
 	if awsRegion == "" {
-		return util.InternalServerError(errors.New("AWS Region was unable to be loaded from env vars"), "POST"), nil
+		return util.InternalServerError(errors.New("AWS Region was unable to be loaded from env vars")), nil
 	}
 
 	// Initialise AWS Session Config
@@ -55,7 +55,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 		SharedConfigState: session.SharedConfigEnable,
 	})
 	if err != nil {
-		return util.InternalServerError(err, "POST"), nil
+		return util.InternalServerError(err), nil
 	}
 
 	// Generate Document UUID and set Document Values
@@ -68,7 +68,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	// DynamoDB Marshal Values
 	imageQueueMap, err := dynamodbattribute.MarshalMap(requestBody)
 	if err != nil {
-		return util.InternalServerError(err, "POST"), nil
+		return util.InternalServerError(err), nil
 	}
 
 	// Start an AWS DB Session
@@ -83,7 +83,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	// Put DynamoDB Item
 	_, err = awsDBSession.PutItem(input)
 	if err != nil {
-		return util.InternalServerError(err, "POST"), nil
+		return util.InternalServerError(err), nil
 	}
 
 	// Start an AWS SQS Session
@@ -93,7 +93,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 		QueueName: &sqsQueue,
 	})
 	if err != nil {
-		return util.InternalServerError(err, "POST"), nil
+		return util.InternalServerError(err), nil
 	}
 
 	// Queue Image to SQS
@@ -102,7 +102,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 		QueueUrl:    urlResult.QueueUrl,
 	})
 	if err != nil {
-		return util.InternalServerError(err, "POST"), nil
+		return util.InternalServerError(err), nil
 	}
 
 	// Build and return JSON response
@@ -111,8 +111,8 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	}
 	response, err := json.Marshal(queueResponse)
 	if err != nil {
-		return util.InternalServerError(err, "POST"), nil
+		return util.InternalServerError(err), nil
 	}
 
-	return util.JSONStringResponse(string(response), "POST"), nil
+	return util.JSONStringResponse(string(response)), nil
 }

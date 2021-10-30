@@ -1,4 +1,4 @@
-import React, { createRef, useState } from "react";
+import React, { createRef, useContext, useState } from "react";
 import { DropzoneRef, FileWithPath, useDropzone } from "react-dropzone";
 import { Filter, PreviewFileWithPath } from "../../api/types";
 import API from "../../api";
@@ -18,24 +18,17 @@ import {
   FormRow,
 } from "./UploadBox.styles";
 import { filterStringMap } from "../../common/enum.maps";
+import { capitalize } from "@material-ui/core";
+import { ProgressContext } from "../../hooks/useProgress";
 
 export const UploadBox = () => {
+  const { dispatch, state } = useContext(ProgressContext);
   const dropzoneRef = createRef<DropzoneRef>();
   const [file, setFile] = useState<PreviewFileWithPath>();
 
-  const [author, setAuthor] = useState("");
-  const [title, setTitle] = useState("");
-  const [filter, setFilter] = useState(
-    new Array(Object.keys(Filter).length / 2).fill(false)
-  );
-
-  const handleChange = (position: number) => {
-    const updatedCheckedState = filter.map((item, index) =>
-      index === position ? !item : item
-    );
-
-    setFilter(updatedCheckedState);
-  };
+  const [author, setAuthor] = useState<string | undefined>(undefined);
+  const [title, setTitle] = useState<string | undefined>(undefined);
+  const [filter, setFilter] = useState<Filter | undefined>(undefined);
 
   const { getRootProps, getInputProps } = useDropzone({
     maxFiles: 1,
@@ -52,7 +45,7 @@ export const UploadBox = () => {
   });
 
   const UploadImage = () => {
-    if (file && author && title && !filter.every((v) => v === false)) {
+    if (file && author && title && filter) {
       API.upload
         .get()
         .then((uploadResponse) => {
@@ -61,24 +54,25 @@ export const UploadBox = () => {
             .put(url, file.file)
             .then((s3Response) => {
               if (s3Response == 200) {
-                const mapCheckboxes = Object.keys(Filter)
-                  // @ts-ignore
-                  .filter((key) => !isNaN(Number(Filter[key])))
-                  .map((value, index) => {
-                    if (filter[index]) {
-                      return value;
-                    }
+                API.queue
+                  .post({
+                    author,
+                    title,
+                    image: uploadResponse.image,
+                    filter: filter,
+                  })
+                  .then((response) => {
+                    dispatch({
+                      type: "UPDATE_IMAGE",
+                      payload: response.documentID,
+                    });
+                  })
+                  .catch((error) => {
+                    toastError(
+                      "Image Upload Failed. Please try again later.",
+                      error
+                    );
                   });
-                // API.queue
-                //   .post({
-                //     author,
-                //     title,
-                //     image: uploadResponse.image,
-                //     filter: filter,
-                //   })
-                //   .then((response) => {
-                //     // TODO: push a context to handle Image Process Tracking
-                //   });
               } else {
                 toastError(
                   "Image Upload Failed. Please try again later.",
@@ -150,21 +144,30 @@ export const UploadBox = () => {
             <FormColumn>
               <FormLabel emphasized>Filters</FormLabel>
               <FormBox>
-                {Object.keys(Filter)
-                  // @ts-ignore
-                  .filter((key) => !isNaN(Number(Filter[key])))
-                  .map((key, index) => (
-                    <FormRow key={key}>
-                      <FormCheckBoxInput
-                        type="checkbox"
-                        name={key}
-                        value={key}
-                        checked={filter[index]}
-                        onChange={() => handleChange(index)}
-                      />
-                      <FormLabel>{key.toLowerCase()}</FormLabel>
-                    </FormRow>
-                  ))}
+                <FormRow>
+                  <FormCheckBoxInput
+                    type="radio"
+                    name="filter"
+                    onChange={() => setFilter(Filter.GRAYSCALE)}
+                  />
+                  <FormLabel>Grayscale</FormLabel>
+                </FormRow>
+                <FormRow>
+                  <FormCheckBoxInput
+                    type="radio"
+                    name="filter"
+                    onChange={() => setFilter(Filter.SEPIA)}
+                  />
+                  <FormLabel>Sepia</FormLabel>
+                </FormRow>
+                <FormRow>
+                  <FormCheckBoxInput
+                    type="radio"
+                    name="filter"
+                    onChange={() => setFilter(Filter.INVERT)}
+                  />
+                  <FormLabel>Invert</FormLabel>
+                </FormRow>
               </FormBox>
             </FormColumn>
             <FormButtonWrapper>
