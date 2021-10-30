@@ -16,7 +16,7 @@ const (
 type ImageDocument struct {
 	Id          string `json:"id,omitempty"`
 	DateCreated int64  `json:"date_created,omitempty"`
-	Filter      int    `json:"filter"`
+	Tag         int    `json:"tag"`
 	Progress    int    `json:"progress,omitempty"`
 	Title       string `json:"title"`
 	Author      string `json:"author"`
