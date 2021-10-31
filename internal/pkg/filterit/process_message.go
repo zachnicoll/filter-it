@@ -38,19 +38,13 @@ func processMessage(ctx context.Context, msg *sqsTypes.Message, clients *util.Cl
 
 	// Mark image document as processing
 	imageDocument.Progress = util.PROCESSING
-	imageDocumentMap, err := attributevalue.MarshalMap(imageDocument)
-	if err != nil {
-		util.SafeFailAndLog(clients, metaData, msg, "Unable to marshal aws sqs dynamodb (processing)", err)
-	}
 
-	// Update in DynamoDb
-	_, err = clients.DynamoDb.PutItem(ctx, &dynamodb.PutItemInput{
-		Item:      imageDocumentMap,
-		TableName: metaData.ImageTable,
-	})
+	err = util.UpdateDocument(ctx, clients, metaData.ImageTable, &imageDocument)
 	if err != nil {
 		util.SafeFailAndLog(clients, metaData, msg, "Unable to update aws sqs dynamodb (processing)", err)
 	}
+
+	util.InvalidateCache(ctx, string(imageDocument.Tag), clients.Redis)
 
 	// Get image from S3
 	s3Object, err := clients.S3.GetObject(ctx, &s3.GetObjectInput{
@@ -87,18 +81,8 @@ func processMessage(ctx context.Context, msg *sqsTypes.Message, clients *util.Cl
 	// Assign new image name to point to filtered image
 	imageDocument.Image = imageName
 
-	// Marshal document for DynamoDb insertion
-	imageDocumentMap, err = attributevalue.MarshalMap(imageDocument)
+	err = util.UpdateDocument(ctx, clients, metaData.ImageTable, &imageDocument)
 	if err != nil {
-		util.SafeFailAndLog(clients, metaData, msg, "Unable to marshal aws sqs dynamodb (processed)", err)
-	}
-
-	// Update image document in DynamoDb
-	_, err = clients.DynamoDb.PutItem(ctx, &dynamodb.PutItemInput{
-		Item:      imageDocumentMap,
-		TableName: metaData.ImageTable,
-	})
-	if err != nil {
-		util.SafeFailAndLog(clients, metaData, msg, "Unable to update aws sqs dynamodb (processed)", err)
+		util.SafeFailAndLog(clients, metaData, msg, "Unable to update aws sqs dynamodb (processing)", err)
 	}
 }

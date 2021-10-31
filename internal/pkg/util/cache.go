@@ -27,3 +27,14 @@ func CacheJSONString(ctx context.Context, key string, value string, redisClient 
 		fmt.Printf("Failed to fetch cache document in Redis: %v", err.Error())
 	}
 }
+
+/*
+	Invalidates the Redis entry for the given key, as well as the "ALL" key, "_"
+*/
+func InvalidateCache(ctx context.Context, key string, redisClient *redis.Client) {
+	// Invalidate Redis cache entry as document was added
+	redisClient.Del(ctx, key)
+
+	// Invalidate the "ALL" entry in Redis as well
+	redisClient.Del(ctx, "_")
+}

@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/go-redis/redis/v8"
 )
 
 const (
@@ -39,6 +40,7 @@ type Clients struct {
 	SQS      *sqs.Client
 	ASG      *autoscaling.Client
 	S3       *s3.Client
+	Redis    *redis.Client
 }
 
 type MetaData struct {

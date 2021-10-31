@@ -24,9 +24,9 @@ func WatchQueue() {
 	// Get instance ID
 	instanceID := util.FetchInstanceID()
 
-	asg, s3Bucket, imageTable, sqsQueue, _ := getEnvironment()
+	asg, s3Bucket, imageTable, sqsQueue := getEnvironment()
 
-	dynamoClient, sqsClient, s3Client, asgClient := getClients(cfg)
+	dynamoClient, sqsClient, s3Client, asgClient, redisClient := getClients(cfg)
 
 	// SQS URL
 	urlResult, err := sqsClient.GetQueueUrl(ctx, &sqs.GetQueueUrlInput{
@@ -41,6 +41,7 @@ func WatchQueue() {
 		SQS:      sqsClient,
 		S3:       s3Client,
 		ASG:      asgClient,
+		Redis:    redisClient,
 	}
 
 	metaData := util.MetaData{
