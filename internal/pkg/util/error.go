@@ -4,9 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -66,14 +64,14 @@ func safeFail(
 		FatalLog("Failed to safely put SQS message back into queue for failsafe", err)
 	}
 
-	_, err = client.ASG.SetInstanceProtection(context.TODO(), &autoscaling.SetInstanceProtectionInput{
-		InstanceIds:          []string{*metaData.InstanceID},
-		AutoScalingGroupName: metaData.ASGName,
-		ProtectedFromScaleIn: aws.Bool(true),
-	})
-	if err != nil {
-		FatalLog("Failed to disable scale-in protection for failsafe", err)
-	}
+	// _, err = client.ASG.SetInstanceProtection(context.TODO(), &autoscaling.SetInstanceProtectionInput{
+	// 	InstanceIds:          []string{*metaData.InstanceID},
+	// 	AutoScalingGroupName: metaData.ASGName,
+	// 	ProtectedFromScaleIn: aws.Bool(true),
+	// })
+	// if err != nil {
+	// 	FatalLog("Failed to disable scale-in protection for failsafe", err)
+	// }
 }
 
 func SafeFailAndLog(clients *Clients,

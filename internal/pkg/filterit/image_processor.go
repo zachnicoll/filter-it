@@ -5,9 +5,7 @@ import (
 	"context"
 	"runtime"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 )
 
@@ -22,7 +20,7 @@ func WatchQueue() {
 	}
 
 	// Get instance ID
-	instanceID := util.FetchInstanceID()
+	instanceID := "" //util.FetchInstanceID()
 
 	asg, s3Bucket, imageTable, sqsQueue := getEnvironment()
 
@@ -72,14 +70,14 @@ func WatchQueue() {
 		// Check a message was received
 		if len(resp.Messages) == 1 {
 			// Protect this instance from being destroyed while processing
-			_, err = asgClient.SetInstanceProtection(ctx, &autoscaling.SetInstanceProtectionInput{
-				InstanceIds:          []string{instanceID},
-				AutoScalingGroupName: aws.String(asg),
-				ProtectedFromScaleIn: aws.Bool(true),
-			})
-			if err != nil {
-				util.FatalLog("Unable to enable scale-in protection", err)
-			}
+			// _, err = asgClient.SetInstanceProtection(ctx, &autoscaling.SetInstanceProtectionInput{
+			// 	InstanceIds:          []string{instanceID},
+			// 	AutoScalingGroupName: aws.String(asg),
+			// 	ProtectedFromScaleIn: aws.Bool(true),
+			// })
+			// if err != nil {
+			// 	util.FatalLog("Unable to enable scale-in protection", err)
+			// }
 
 			targetMessage := resp.Messages[0]
 
