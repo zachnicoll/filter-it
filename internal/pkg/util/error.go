@@ -2,13 +2,15 @@ package util
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	sqsTypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
 )
 
 func FatalLog(msg string, err error) {
@@ -17,16 +19,20 @@ func FatalLog(msg string, err error) {
 }
 
 func safeFail(
-	client *Clients,
+	clients *Clients,
 	metaData *MetaData,
-	msg *sqsTypes.Message,
+	msg *QueueResponse,
 ) {
-	documentID := msg.Body
 
-	result, err := client.DynamoDb.GetItem(context.TODO(), &dynamodb.GetItemInput{
+	result, err := clients.DynamoDb.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: metaData.ImageTable,
 		Key: map[string]types.AttributeValue{
-			"id": &types.AttributeValueMemberS{Value: *documentID},
+			"id": &types.AttributeValueMemberS{
+				Value: msg.DocumentID,
+			},
+			"date_created": &types.AttributeValueMemberN{
+				Value: fmt.Sprintf("%d", msg.DateCreated),
+			},
 		},
 	})
 	if err != nil {
@@ -42,22 +48,20 @@ func safeFail(
 
 	imageDocument.Progress = READY
 
-	imageDocumentMap, err := attributevalue.MarshalMap(imageDocument)
-	if err != nil {
-		FatalLog("Failed to marshal sqs document for failsafe", err)
-	}
-
-	input := &dynamodb.PutItemInput{
-		Item:      imageDocumentMap,
-		TableName: metaData.ImageTable,
-	}
-	_, err = client.DynamoDb.PutItem(context.TODO(), input)
+	err = UpdateDocument(context.TODO(), clients, metaData.ImageTable, &imageDocument)
 	if err != nil {
 		FatalLog("Failed to update sqs document for failsafe", err)
 	}
 
-	_, err = client.SQS.SendMessage(context.TODO(), &sqs.SendMessageInput{
-		MessageBody: documentID,
+	queueMsgBytes, err := json.Marshal(msg)
+	if err != nil {
+		FatalLog("Failed to marshal sqs message for failsafe", err)
+	}
+
+	queueMsgStr := string(queueMsgBytes)
+
+	_, err = clients.SQS.SendMessage(context.TODO(), &sqs.SendMessageInput{
+		MessageBody: aws.String(queueMsgStr),
 		QueueUrl:    metaData.SQSUrl,
 	})
 	if err != nil {
@@ -76,8 +80,11 @@ func safeFail(
 
 func SafeFailAndLog(clients *Clients,
 	metaData *MetaData,
-	sqsMsg *sqsTypes.Message,
+	sqsMsg *QueueResponse,
 	errMsg string, err error) {
+	// Log error here first in case safeFail fails and doesn't FatalLog original error
+	log.Println(errMsg, err.Error())
+
 	safeFail(clients, metaData, sqsMsg)
 	FatalLog(errMsg, err)
 }

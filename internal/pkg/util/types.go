@@ -32,7 +32,8 @@ type ImageDocument struct {
 }
 
 type QueueResponse struct {
-	DocumentID string `json:"id"`
+	DocumentID  string `json:"id"`
+	DateCreated int64  `json:"date_created,omitempty"`
 }
 
 type Clients struct {

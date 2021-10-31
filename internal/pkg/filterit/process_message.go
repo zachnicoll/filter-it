@@ -4,6 +4,7 @@ import (
 	"aws-scalable-image-filter/internal/pkg/util"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -19,24 +20,35 @@ import (
 func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Message, clients *util.Clients, metaData *util.MetaData) {
 	defer wg.Done()
 
+	var queueMsg util.QueueResponse
+	jsonStr := *msg.Body
+	err := json.Unmarshal([]byte(jsonStr), &queueMsg)
+
+	if err != nil {
+		util.SafeFailAndLog(clients, metaData, &queueMsg, "Could not unmarshal queue message", err)
+	}
+
 	// Get DynamoDB image info from message body
 	result, err := clients.DynamoDb.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: metaData.ImageTable,
 		Key: map[string]dynamoTypes.AttributeValue{
 			"id": &dynamoTypes.AttributeValueMemberS{
-				Value: *msg.Body,
+				Value: queueMsg.DocumentID,
+			},
+			"date_created": &dynamoTypes.AttributeValueMemberN{
+				Value: fmt.Sprintf("%d", queueMsg.DateCreated),
 			},
 		},
 	})
 	if err != nil {
-		util.SafeFailAndLog(clients, metaData, msg, "Unable to check aws sqs dynamodb status", err)
+		util.SafeFailAndLog(clients, metaData, &queueMsg, "Unable to check aws sqs dynamodb status", err)
 	}
 
 	// Unmarshal image document
 	var imageDocument util.ImageDocument
 	err = attributevalue.UnmarshalMap(result.Item, &imageDocument)
 	if err != nil {
-		util.SafeFailAndLog(clients, metaData, msg, "Unable to unmarshal aws sqs dynamodb status", err)
+		util.SafeFailAndLog(clients, metaData, &queueMsg, "Unable to unmarshal aws sqs dynamodb status", err)
 	}
 
 	// Mark image document as processing
@@ -44,7 +56,7 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 
 	err = util.UpdateDocument(ctx, clients, metaData.ImageTable, &imageDocument)
 	if err != nil {
-		util.SafeFailAndLog(clients, metaData, msg, "Unable to update aws sqs dynamodb (processing)", err)
+		util.SafeFailAndLog(clients, metaData, &queueMsg, "Unable to update aws sqs dynamodb (processing)", err)
 	}
 
 	util.InvalidateCache(ctx, string(imageDocument.Tag), clients.Redis)
@@ -55,13 +67,13 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 		Key:    aws.String(imageDocument.Image),
 	})
 	if err != nil {
-		util.SafeFailAndLog(clients, metaData, msg, "Unable to get S3 image", err)
+		util.SafeFailAndLog(clients, metaData, &queueMsg, "Unable to get S3 image", err)
 	}
 
 	// Apply filter to image
 	blob, err := applyFilter(s3Object.Body, imageDocument.Tag)
 	if err != nil {
-		util.SafeFailAndLog(clients, metaData, msg, "Failed to filter image", err)
+		util.SafeFailAndLog(clients, metaData, &queueMsg, "Failed to filter image", err)
 	}
 	reader := bytes.NewReader(blob)
 
@@ -75,7 +87,7 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 		Body:   reader,
 	})
 	if err != nil {
-		util.SafeFailAndLog(clients, metaData, msg, "Unable to put new S3 image", err)
+		util.SafeFailAndLog(clients, metaData, &queueMsg, "Unable to put new S3 image", err)
 	}
 
 	// Mark image as DONE processing
@@ -86,6 +98,6 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 
 	err = util.UpdateDocument(ctx, clients, metaData.ImageTable, &imageDocument)
 	if err != nil {
-		util.SafeFailAndLog(clients, metaData, msg, "Unable to update aws sqs dynamodb (processing)", err)
+		util.SafeFailAndLog(clients, metaData, &queueMsg, "Unable to update aws sqs dynamodb (processing)", err)
 	}
 }
