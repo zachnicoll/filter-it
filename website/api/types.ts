@@ -42,4 +42,3 @@ export interface QueueRequestBody {
 export interface QueueResponse {
   documentID: string;
 }
-

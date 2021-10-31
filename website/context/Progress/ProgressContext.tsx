@@ -1,5 +1,6 @@
+import API from "api";
 import { Progress } from "api/types";
-import { toastUpdate } from "common/toast";
+import { toastError, toastSuccess, toastUpdate } from "common/toast";
 import {
   Dispatch,
   createContext,
@@ -8,6 +9,7 @@ import {
   useRef,
   useContext,
 } from "react";
+import { toast } from "react-toastify";
 import progressReducer, {
   ProgressAction,
   ProgressContextState,
@@ -32,19 +34,42 @@ const ProgressProvider: React.FC = ({ children }) => {
 
   const intervalRef = useRef<any>(undefined);
 
-  useEffect(() => {
-    if (intervalRef.current && progressState.status == Progress.PROCESSING) {
-      intervalRef.current = setInterval(() => {
-        if (progressState.notifyReference) {
-          toastUpdate(progressState.notifyReference as string);
-        }
-      }, 15000);
-    } else if (
-      intervalRef.current &&
-      progressState.status !== Progress.PROCESSING
-    ) {
-      clearInterval(intervalRef.current);
+  const checkImageProgress = async (): Promise<void> => {
+    if (progressState.id) {
+      let shouldClearState = false;
+
+      const progress = await API.progress.get(progressState.id);
+
+      if (progress === Progress.DONE) {
+        toastSuccess("Image processed successfully!");
+        shouldClearState = true;
+      } else if (progress === Progress.FAILED) {
+        toastError(
+          "Failed to process image, please try again",
+          new Error("Image Processing Failed")
+        );
+        shouldClearState = true;
+      } else if (progress === Progress.PROCESSING) {
+        intervalRef.current = setInterval(() => {
+          if (progressState.notifyReference) {
+            toastUpdate(progressState.notifyReference as string, {
+              type: toast.TYPE.SUCCESS,
+            });
+          }
+        }, 5000);
+      }
+
+      if (shouldClearState) {
+        dispatchProgress({ type: "CLEAR" });
+        intervalRef.current && clearInterval(intervalRef.current);
+      }
     }
+  };
+
+  useEffect(() => {
+    checkImageProgress();
+
+    return () => intervalRef.current && clearInterval(intervalRef.current);
   }, [progressState]);
 
   return (
