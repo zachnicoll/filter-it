@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -19,6 +20,8 @@ import (
 
 func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Message, clients *util.Clients, metaData *util.MetaData) {
 	defer wg.Done()
+
+	log.Println("Processing Queue Message", *msg.Body)
 
 	var queueMsg util.QueueResponse
 	jsonStr := *msg.Body
@@ -71,10 +74,14 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 	}
 
 	// Apply filter to image
+	log.Println("Applying Filter To Image:", imageDocument.Id, "Filter:", imageDocument.Tag)
+
 	blob, err := applyFilter(s3Object.Body, imageDocument.Tag)
 	if err != nil {
 		util.SafeFailAndLog(clients, metaData, &queueMsg, "Failed to filter image", err)
 	}
+
+	log.Println("Successfully Applied Filter", imageDocument.Id)
 
 	reader := bytes.NewReader(blob)
 
@@ -91,6 +98,8 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 		util.SafeFailAndLog(clients, metaData, &queueMsg, "Unable to put new S3 image", err)
 	}
 
+	log.Println("Uploaded Image to S3", imageName)
+
 	// Mark image as DONE processing
 	imageDocument.Progress = util.DONE
 
@@ -101,4 +110,6 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 	if err != nil {
 		util.SafeFailAndLog(clients, metaData, &queueMsg, "Unable to update aws sqs dynamodb (processing)", err)
 	}
+
+	log.Println("Finished Processing Image", imageDocument.Id)
 }
