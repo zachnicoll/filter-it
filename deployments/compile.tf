@@ -30,6 +30,16 @@ resource "null_resource" "compile_lambda_queue" {
   }
 }
 
+resource "null_resource" "compile_lambda_progress" {
+  triggers = {
+    build_number = timestamp()
+  }
+
+  provisioner "local-exec" {
+    command = "GOOS=linux go build -o ./out/lambda_progress ../cmd/lambda_progress"
+  }
+}
+
 # resource "null_resource" "dockerise_image_processor" {
 #   triggers = {
 #     build_number = timestamp()
@@ -79,5 +89,14 @@ data "archive_file" "lambda_upload_zip" {
   type        = "zip"
   depends_on = [
     null_resource.compile_lambda_upload
+  ]
+}
+
+data "archive_file" "lambda_progress_zip" {
+  source_file = "${path.module}/out/lambda_progress"
+  output_path = "${path.module}/out/lambda_progress.zip"
+  type        = "zip"
+  depends_on = [
+    null_resource.compile_lambda_progress
   ]
 }

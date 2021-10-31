@@ -63,3 +63,25 @@ resource "aws_lambda_function" "lambda_feed" {
     }
   }
 }
+
+/* Lambda Progress */
+resource "aws_lambda_function" "lambda_progress" {
+  filename         = data.archive_file.lambda_progress_zip.output_path
+  handler          = "lambda_progress"
+  role             = aws_iam_role.lambda_exec_role.arn
+  runtime          = "go1.x"
+  function_name    = "filterit-lambda_progress"
+  source_code_hash = data.archive_file.lambda_progress_zip.output_base64sha256
+
+  environment {
+    variables = {
+      AWS_IMAGE_TABLE   = var.dynamodb_name
+      S3_BUCKET = var.image_bucket
+    }
+  }
+
+  vpc_config {
+    subnet_ids         = [aws_subnet.filterit-subnet-private-1.id]
+    security_group_ids = [aws_security_group.filterit-sg.id]
+  }
+}
