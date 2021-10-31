@@ -41,67 +41,79 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	redisKey := filter
 	cachedDoc, err := redisClient.Get(ctx, redisKey).Result()
 
+	redisCacheHit := false
+
 	if err == nil && cachedDoc != "" {
 		// Found a cached document for this query, return it
-		return util.JSONStringResponse(cachedDoc), nil
+		redisCacheHit = true
+		// return util.JSONStringResponse(cachedDoc), nil
 	} else if err != redis.Nil {
 		fmt.Printf("Failed to fetch cached document from Redis: %v\n", err.Error())
 
 		// Continue with execution, regardless of cache retrieval failure
 	}
 
-	// Create DynamoDB client
-	client := dynamodb.NewFromConfig(cfg)
-
-	// Scan DynamoDB table to retrieve ALL documents
-	tableName := os.Getenv("AWS_IMAGE_TABLE")
 	documents := []util.ImageDocument{}
 
-	if filter == "_" {
-		filt := expression.Name("progress").Equal(expression.Value(util.DONE))
-		expr, err := expression.NewBuilder().WithFilter(filt).Build()
+	if !redisCacheHit {
+		// Create DynamoDB client
+		client := dynamodb.NewFromConfig(cfg)
+		tableName := os.Getenv("AWS_IMAGE_TABLE")
 
-		if err != nil {
-			return util.InternalServerError(err), err
-		}
+		if filter == "_" {
+			// Scan DynamoDB table to retrieve ALL documents
 
-		// Perform the scan with any conditions that may be present
-		scanInput := &dynamodb.ScanInput{
-			TableName:                 &tableName,
-			ExpressionAttributeNames:  expr.Names(),
-			ExpressionAttributeValues: expr.Values(),
-			FilterExpression:          expr.Filter(),
-			ProjectionExpression:      expr.Projection(),
-		}
+			filt := expression.Name("progress").Equal(expression.Value(util.DONE))
+			expr, err := expression.NewBuilder().WithFilter(filt).Build()
 
-		scanOutput, err := client.Scan(ctx, scanInput)
-		if err != nil {
-			return util.InternalServerError(err), err
-		}
+			if err != nil {
+				return util.InternalServerError(err), err
+			}
 
-		// Convert response items to list of ImageDocument
-		err = attributevalue.UnmarshalListOfMaps(scanOutput.Items, &documents)
-		if err != nil {
-			return util.InternalServerError(err), err
+			// Perform the scan with any conditions that may be present
+			scanInput := &dynamodb.ScanInput{
+				TableName:                 &tableName,
+				ExpressionAttributeNames:  expr.Names(),
+				ExpressionAttributeValues: expr.Values(),
+				FilterExpression:          expr.Filter(),
+				ProjectionExpression:      expr.Projection(),
+			}
+
+			scanOutput, err := client.Scan(ctx, scanInput)
+			if err != nil {
+				return util.InternalServerError(err), err
+			}
+
+			// Convert response items to list of ImageDocument
+			err = attributevalue.UnmarshalListOfMaps(scanOutput.Items, &documents)
+			if err != nil {
+				return util.InternalServerError(err), err
+			}
+		} else {
+			indexName := "tag-date_created-index"
+			queryInput := &dynamodb.QueryInput{
+				TableName: &tableName,
+				IndexName: &indexName,
+				ExpressionAttributeValues: map[string]types.AttributeValue{
+					":f": &types.AttributeValueMemberN{Value: filter},
+				},
+				KeyConditionExpression: aws.String("tag = :f"),
+			}
+
+			queryOutput, err := client.Query(ctx, queryInput)
+			if err != nil {
+				return util.InternalServerError(err), err
+			}
+
+			// Convert response items to list of ImageDocument
+			err = attributevalue.UnmarshalListOfMaps(queryOutput.Items, &documents)
+			if err != nil {
+				return util.InternalServerError(err), err
+			}
 		}
 	} else {
-		indexName := "tag-date_created-index"
-		queryInput := &dynamodb.QueryInput{
-			TableName: &tableName,
-			IndexName: &indexName,
-			ExpressionAttributeValues: map[string]types.AttributeValue{
-				":f": &types.AttributeValueMemberN{Value: filter},
-			},
-			KeyConditionExpression: aws.String("tag = :f"),
-		}
-
-		queryOutput, err := client.Query(ctx, queryInput)
-		if err != nil {
-			return util.InternalServerError(err), err
-		}
-
-		// Convert response items to list of ImageDocument
-		err = attributevalue.UnmarshalListOfMaps(queryOutput.Items, &documents)
+		// Convert cached Redis JSON string to ImageDocument[]
+		err := json.Unmarshal([]byte(cachedDoc), &documents)
 		if err != nil {
 			return util.InternalServerError(err), err
 		}
@@ -118,6 +130,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	s3Client := s3.NewFromConfig(cfg)
 	s3PresignClient := s3.NewPresignClient(s3Client)
 
+	// Always attach a new signed URL, even for cached results
 	signedDocuments := []util.ImageDocument{}
 
 	for _, doc := range documents {
@@ -132,7 +145,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 		}
 
 		signedUrl := url.QueryEscape(resp.URL)
-		doc.Image = signedUrl
+		doc.ImageURL = signedUrl
 
 		signedDocuments = append(signedDocuments, doc)
 	}
