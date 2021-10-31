@@ -130,7 +130,7 @@ func UpdateDocument(ctx context.Context, clients *Clients, table *string, item *
 		return err
 	}
 
-	InvalidateCache(ctx, string(item.Tag), clients.Redis)
+	InvalidateCache(ctx, fmt.Sprintf("%d", item.Tag), clients.Redis)
 
 	return nil
 }

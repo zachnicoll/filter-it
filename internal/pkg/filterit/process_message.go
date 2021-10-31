@@ -59,7 +59,7 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 		util.SafeFailAndLog(clients, metaData, &queueMsg, "Unable to update aws sqs dynamodb (processing)", err)
 	}
 
-	util.InvalidateCache(ctx, string(imageDocument.Tag), clients.Redis)
+	util.InvalidateCache(ctx, fmt.Sprintf("%d", imageDocument.Tag), clients.Redis)
 
 	// Get image from S3
 	s3Object, err := clients.S3.GetObject(ctx, &s3.GetObjectInput{
@@ -75,6 +75,7 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 	if err != nil {
 		util.SafeFailAndLog(clients, metaData, &queueMsg, "Failed to filter image", err)
 	}
+
 	reader := bytes.NewReader(blob)
 
 	// New image as UUID
