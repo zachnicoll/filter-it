@@ -9,49 +9,6 @@ interface HookReturn {
   loading: boolean;
 }
 
-const mockData = [
-  {
-    image: "https://via.placeholder.com/1080x1080/eee?text=1:1",
-    progress: 2,
-    tag: 0,
-    author: "Author 0",
-    title: "Image 0",
-    id: "0",
-  },
-  {
-    image: "https://via.placeholder.com/1080x1080/eee?text=1:1",
-    progress: 2,
-    tag: 1,
-    author: "Author 1",
-    title: "Image 1",
-    id: "1",
-  },
-  {
-    image: "https://via.placeholder.com/1080x1080/eee?text=1:1",
-    progress: 2,
-    tag: 1,
-    author: "Author 2",
-    title: "Image 2",
-    id: "2",
-  },
-  {
-    image: "https://via.placeholder.com/1080x1080/eee?text=1:1",
-    progress: 2,
-    tag: 0,
-    author: "Author 3",
-    title: "Image 3",
-    id: "3",
-  },
-  {
-    image: "https://via.placeholder.com/1080x1080/eee?text=1:1",
-    progress: 2,
-    tag: 2,
-    author: "Author 4",
-    title: "Image 4",
-    id: "4",
-  },
-];
-
 export const useImages = (filter: Filter | null): HookReturn => {
   const [images, setImages] = useState<ImageDocument[]>([]);
   const [loading, setLoading] = useState(true);
