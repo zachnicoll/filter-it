@@ -35,7 +35,7 @@ resource "aws_iam_policy" "ec2_exec_sqs" {
   "Statement": [
     {
       "Action": [
-        "sqs:RecieveMessage",
+        "sqs:ReceiveMessage",
         "sqs:SendMessage",
         "sqs:GetQueueUrl"
       ],

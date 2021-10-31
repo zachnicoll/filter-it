@@ -53,7 +53,6 @@ resource "aws_launch_configuration" "filterit-lc" {
   key_name = aws_key_pair.image_processor_key.key_name
   iam_instance_profile = aws_iam_instance_profile.ec2_iam_profile.name
 
-
   security_groups = [ aws_security_group.filterit-sg.id ]
   associate_public_ip_address = true
 

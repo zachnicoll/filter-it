@@ -23,7 +23,7 @@ docker pull znicoll/filter-it-image-processor
 sudo apt-get install jq -y
 
 TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"`
-META_DATA=`curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/identity-credentials/ec2/security-credentials/ec2-instance`
+META_DATA=`curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/iam/security-credentials/ec2_exec_role`
 
 export AWS_ACCESS_KEY_ID=$(jq ".AccessKeyId" <<< $META_DATA)
 export AWS_SECRET_ACCESS_KEY=$(jq ".SecretAccessKey" <<< $META_DATA)
