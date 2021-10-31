@@ -61,7 +61,7 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	// Generate Document UUID and set Document Values
 	documentID := uuid.New()
 	requestBody.Id = documentID.String()
-	requestBody.Progress = util.PROCESSING
+	requestBody.Progress = util.READY
 	requestBody.DateCreated = time.Now().Unix()
 
 
