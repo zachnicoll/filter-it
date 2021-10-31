@@ -11,14 +11,8 @@ import (
 	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	sqsTypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
-
-	"github.com/aws/aws-sdk-go-v2/service/sqs"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 )
@@ -117,73 +111,26 @@ func FetchInstanceID() string {
 	return instanceID
 }
 
-func FatalLog(msg string, err error) {
-	log.Println(msg)
-	log.Fatalln(err)
-}
+/*
+	Updates the given document in DynamoDB, and invalidates the Redis entry for its
+	corresponding Tag (and the "ALL" key, "_").
+*/
+func UpdateDocument(ctx context.Context, clients *Clients, table *string, item *ImageDocument) (err error) {
+	itemMap, err := attributevalue.MarshalMap(item)
 
-func safeFail(
-	client *Clients,
-	metaData *MetaData,
-	msg *sqsTypes.Message,
-) {
-	documentID := msg.Body
-
-	result, err := client.DynamoDb.GetItem(context.TODO(), &dynamodb.GetItemInput{
-		TableName: metaData.ImageTable,
-		Key: map[string]types.AttributeValue{
-			"id": &types.AttributeValueMemberS{Value: *documentID},
-		},
+	if err != nil {
+		return err
+	}
+	_, err = clients.DynamoDb.PutItem(ctx, &dynamodb.PutItemInput{
+		Item:      itemMap,
+		TableName: table,
 	})
+
 	if err != nil {
-		FatalLog("Failed to get sqs document for failsafe", err)
+		return err
 	}
 
-	// Unmarshal image document
-	var imageDocument ImageDocument
-	err = attributevalue.UnmarshalMap(result.Item, &imageDocument)
-	if err != nil {
-		FatalLog("Failed to unmarshal sqs document for failsafe", err)
-	}
+	InvalidateCache(ctx, string(item.Tag), clients.Redis)
 
-	imageDocument.Progress = READY
-
-	imageDocumentMap, err := attributevalue.MarshalMap(imageDocument)
-	if err != nil {
-		FatalLog("Failed to marshal sqs document for failsafe", err)
-	}
-
-	input := &dynamodb.PutItemInput{
-		Item:      imageDocumentMap,
-		TableName: metaData.ImageTable,
-	}
-	_, err = client.DynamoDb.PutItem(context.TODO(), input)
-	if err != nil {
-		FatalLog("Failed to update sqs document for failsafe", err)
-	}
-
-	_, err = client.SQS.SendMessage(context.TODO(), &sqs.SendMessageInput{
-		MessageBody: documentID,
-		QueueUrl:    metaData.SQSUrl,
-	})
-	if err != nil {
-		FatalLog("Failed to safely put SQS message back into queue for failsafe", err)
-	}
-
-	_, err = client.ASG.SetInstanceProtection(context.TODO(), &autoscaling.SetInstanceProtectionInput{
-		InstanceIds:          []string{*metaData.InstanceID},
-		AutoScalingGroupName: metaData.ASGName,
-		ProtectedFromScaleIn: aws.Bool(true),
-	})
-	if err != nil {
-		FatalLog("Failed to disable scale-in protection for failsafe", err)
-	}
-}
-
-func SafeFailAndLog(clients *Clients,
-	metaData *MetaData,
-	sqsMsg *sqsTypes.Message,
-	errMsg string, err error) {
-	safeFail(clients, metaData, sqsMsg)
-	FatalLog(errMsg, err)
+	return nil
 }
