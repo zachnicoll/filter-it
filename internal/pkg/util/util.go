@@ -113,7 +113,6 @@ func FetchInstanceID() string {
 	}
 
 	instanceID := string(responseData)
-	fmt.Println(instanceID)
 
 	return instanceID
 }

@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func getEnviroment() (asg string, s3Bucket string, imageTable string, sqsQueue string, redisUrl string) {
+func getEnvironment() (asg string, s3Bucket string, imageTable string, sqsQueue string, redisUrl string) {
 	// Get AutoScaling Group
 	asg = os.Getenv("AS_GROUP")
 	if asg == "" {
