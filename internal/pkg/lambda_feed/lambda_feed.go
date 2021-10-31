@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/go-redis/redis/v8"
 )
@@ -107,8 +109,31 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	// Sort documents by DateCreated, with latest first
 	util.SortDocuments(documents)
 
+	s3BucketName := os.Getenv("S3_BUCKET")
+	s3Client := s3.NewFromConfig(cfg)
+	s3PresignClient := s3.NewPresignClient(s3Client)
+
+	signedDocuments := []util.ImageDocument{}
+
+	for _, doc := range documents {
+		input := &s3.GetObjectInput{
+			Bucket: &s3BucketName,
+			Key:    &doc.Image,
+		}
+
+		resp, err := s3PresignClient.PresignGetObject(ctx, input)
+		if err != nil {
+			return util.InternalServerError(err), err
+		}
+
+		signedUrl := url.QueryEscape(resp.URL)
+		doc.Image = signedUrl
+
+		signedDocuments = append(signedDocuments, doc)
+	}
+
 	// Convert documents to JSON
-	response, err := json.Marshal(documents)
+	response, err := json.Marshal(signedDocuments)
 	if err != nil {
 		return util.InternalServerError(err), err
 	}
