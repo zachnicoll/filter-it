@@ -49,7 +49,7 @@ const ProgressProvider: React.FC = ({ children }) => {
           new Error("Image Processing Failed")
         );
         shouldClearState = true;
-      } else if (progress === Progress.PROCESSING) {
+      } else if (progress === Progress.PROCESSING || progress === Progress.READY) {
         intervalRef.current = setInterval(() => {
           if (progressState.notifyReference) {
             toastUpdate(progressState.notifyReference as string, {
