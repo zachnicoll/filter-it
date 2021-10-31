@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func getEnviroment() (asg string, s3Bucket string, imageTable string, sqsQueue string) {
+func getEnviroment() (asg string, s3Bucket string, imageTable string, sqsQueue string, redisUrl string) {
 	// Get AutoScaling Group
 	asg = os.Getenv("AS_GROUP")
 	if asg == "" {
@@ -30,5 +30,11 @@ func getEnviroment() (asg string, s3Bucket string, imageTable string, sqsQueue s
 		log.Fatalln("Unable to find sqs queue name")
 	}
 
-	return asg, s3Bucket, imageTable, sqsQueue
+	// Get Redis URL
+	redisUrl = os.Getenv("AWS_REDIS_ADDRESS")
+	if redisUrl == "" {
+		log.Fatalln("Unable to find Redis url")
+	}
+
+	return asg, s3Bucket, imageTable, sqsQueue, redisUrl
 }
