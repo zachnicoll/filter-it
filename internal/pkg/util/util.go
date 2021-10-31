@@ -61,7 +61,7 @@ func SortDocuments(documents []ImageDocument) {
 	sort.Slice(
 		documents,
 		func(i, j int) bool {
-			return documents[i].DateCreated < documents[j].DateCreated
+			return documents[i].DateCreated > documents[j].DateCreated
 		},
 	)
 }

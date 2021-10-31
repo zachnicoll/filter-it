@@ -29,6 +29,7 @@ type ImageDocument struct {
 	Title       string `json:"title" dynamodbav:"title"`
 	Author      string `json:"author" dynamodbav:"author"`
 	Image       string `json:"image" dynamodbav:"image"`
+	ImageURL    string `json:"image_url,omitempty"`
 }
 
 type QueueResponse struct {
@@ -58,6 +59,6 @@ type ProgressRequest struct {
 
 type ProgressResponse struct {
 	DocumentID string `json:"id"`
-	ImageURL string `json:"imageurl"`
-	Progress int `json:"progress"`
+	ImageURL   string `json:"imageurl"`
+	Progress   int    `json:"progress"`
 }
