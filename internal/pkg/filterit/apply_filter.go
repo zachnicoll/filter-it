@@ -30,11 +30,13 @@ func applyFilter(imageReader io.ReadCloser, filter int) (blob []byte, err error)
 	// Manipulate image based on supplied filter
 	switch filter {
 	case util.GREYSCALE:
-		err = mw.SetColorspace(imagick.COLORSPACE_GRAY)
+		mw.SetColorspace(imagick.COLORSPACE_GRAY)
+		mw.SeparateImageChannel(imagick.CHANNELS_GRAY)
+		mw, err = mw.FxImage("(r+g+b)/3")
 	case util.INVERT:
 		err = mw.NegateImage(false)
 	case util.SEPIA:
-		err = mw.SepiaToneImage(80)
+		err = mw.SepiaToneImage(0)
 	}
 
 	if err != nil {
