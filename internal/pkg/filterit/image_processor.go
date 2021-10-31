@@ -4,9 +4,10 @@ import (
 	"aws-scalable-image-filter/internal/pkg/util"
 
 	"context"
+	"sync"
+
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"sync"
 )
 
 func WatchQueue() {
@@ -59,7 +60,7 @@ func WatchQueue() {
 		MessageAttributeNames: []string{
 			"All",
 		},
-		WaitTimeSeconds: 30,
+		WaitTimeSeconds: 10,
 	}
 
 	// Intake forever

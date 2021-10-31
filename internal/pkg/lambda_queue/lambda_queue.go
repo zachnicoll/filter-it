@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
 	"os"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/aws/aws-lambda-go/events"
 
@@ -64,7 +65,6 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	requestBody.Progress = util.READY
 	requestBody.DateCreated = time.Now().Unix()
 
-
 	// DynamoDB Marshal Values
 	imageQueueMap, err := dynamodbattribute.MarshalMap(requestBody)
 	if err != nil {
@@ -96,23 +96,26 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 		return util.InternalServerError(err), nil
 	}
 
+	queueMsg := &util.QueueResponse{
+		DocumentID:  documentID.String(),
+		DateCreated: requestBody.DateCreated,
+	}
+
+	queueMsgBytes, err := json.Marshal(queueMsg)
+	if err != nil {
+		return util.InternalServerError(err), nil
+	}
+
+	queueMsgStr := string(queueMsgBytes)
+
 	// Queue Image to SQS
 	_, err = awsSQSSession.SendMessage(&sqs.SendMessageInput{
-		MessageBody: aws.String(documentID.String()),
+		MessageBody: aws.String(queueMsgStr),
 		QueueUrl:    urlResult.QueueUrl,
 	})
 	if err != nil {
 		return util.InternalServerError(err), nil
 	}
 
-	// Build and return JSON response
-	var queueResponse = &util.QueueResponse{
-		DocumentID: documentID.String(),
-	}
-	response, err := json.Marshal(queueResponse)
-	if err != nil {
-		return util.InternalServerError(err), nil
-	}
-
-	return util.JSONStringResponse(string(response)), nil
+	return util.JSONStringResponse(queueMsgStr), nil
 }
