@@ -36,6 +36,7 @@ resource "aws_instance" "image_processor" {
   subnet_id       = aws_subnet.filterit-subnet-public-1.id
   key_name        = aws_key_pair.image_processor_key.key_name
   user_data       = data.template_file.deploy_script.rendered
+  iam_instance_profile = aws_iam_instance_profile.ec2_iam_profile.name
 
   depends_on = [
     aws_dynamodb_table.ddbtable,
