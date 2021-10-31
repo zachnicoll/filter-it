@@ -22,13 +22,13 @@ const (
 )
 
 type ImageDocument struct {
-	Id          string `json:"id,omitempty"`
-	DateCreated int64  `json:"date_created,omitempty"`
-	Tag         int    `json:"tag"`
-	Progress    int    `json:"progress,omitempty"`
-	Title       string `json:"title"`
-	Author      string `json:"author"`
-	Image       string `json:"image"`
+	Id          string `json:"id,omitempty" dynamodbav:"id"`
+	DateCreated int64  `json:"date_created,omitempty" dynamodbav:"date_created"`
+	Tag         int    `json:"tag" dynamodbav:"tag"`
+	Progress    int    `json:"progress,omitempty" dynamodbav:"progress"`
+	Title       string `json:"title" dynamodbav:"title"`
+	Author      string `json:"author" dynamodbav:"author"`
+	Image       string `json:"image" dynamodbav:"image"`
 }
 
 type QueueResponse struct {
