@@ -8,7 +8,7 @@ const options: { value: Filter | null; label: string }[] = [
   { value: Filter.GRAYSCALE, label: "#grayscale" },
   { value: Filter.INVERT, label: "#invert" },
   { value: Filter.SEPIA, label: "#sepia" },
-  { value: null, label: "#all" }
+  { value: null, label: "#all" },
 ];
 
 export const SearchBar: React.FC = () => {
@@ -27,9 +27,12 @@ export const SearchBar: React.FC = () => {
         }),
       }}
       value={searchState.search}
-      onChange={(selected: unknown) =>
-        dispatchSearch({ type: "SEARCH", payload: selected as Filter | null })
-      }
+      onChange={(selected: unknown) => {
+        dispatchSearch({
+          type: "SEARCH",
+          payload: selected,
+        });
+      }}
     />
   );
 };
