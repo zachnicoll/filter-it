@@ -2,16 +2,18 @@ package filterit
 
 import (
 	"aws-scalable-image-filter/internal/pkg/util"
-	"context"
-	"runtime"
 
+	"context"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"sync"
 )
 
 func WatchQueue() {
 	ctx := context.Background()
-	runtime.GOMAXPROCS(2)
+	var wg sync.WaitGroup
+
+	var instanceProtection = false
 
 	// Load default AWS config, including AWS_REGION env var
 	cfg, err := config.LoadDefaultConfig(ctx)
@@ -60,37 +62,59 @@ func WatchQueue() {
 		WaitTimeSeconds: 30,
 	}
 
+	// Intake forever
 	for {
-		// Receive an SQS Message
-		resp, err := sqsClient.ReceiveMessage(ctx, receiveMessageInput)
-		if err != nil {
-			util.FatalLog("Unable to fetch aws sqs message", err)
-		}
-
-		// Check a message was received
-		if len(resp.Messages) == 1 {
-			// Protect this instance from being destroyed while processing
-			// _, err = asgClient.SetInstanceProtection(ctx, &autoscaling.SetInstanceProtectionInput{
-			// 	InstanceIds:          []string{instanceID},
-			// 	AutoScalingGroupName: aws.String(asg),
-			// 	ProtectedFromScaleIn: aws.Bool(true),
-			// })
-			// if err != nil {
-			// 	util.FatalLog("Unable to enable scale-in protection", err)
-			// }
-
-			targetMessage := resp.Messages[0]
-
-			// Remove message from queue now that we have it
-			_, err = sqsClient.DeleteMessage(ctx, &sqs.DeleteMessageInput{
-				QueueUrl:      urlResult.QueueUrl,          // Required
-				ReceiptHandle: targetMessage.ReceiptHandle, // Required
-			})
+		// Max of 2 messages per intake
+		for i := 0; i < 2; i++ {
+			// Receive an SQS Message
+			resp, err := sqsClient.ReceiveMessage(ctx, receiveMessageInput)
 			if err != nil {
-				util.FatalLog("Unable to delete aws sqs message", err)
+				util.FatalLog("Unable to fetch aws sqs message", err)
 			}
 
-			go processMessage(ctx, &targetMessage, &clients, &metaData)
+			// Check that message was received
+			if len(resp.Messages) == 1 {
+				if !instanceProtection {
+					// Protect this instance from being destroyed while processing
+					// _, err = asgClient.SetInstanceProtection(ctx, &autoscaling.SetInstanceProtectionInput{
+					// 	InstanceIds:          []string{instanceID},
+					// 	AutoScalingGroupName: aws.String(asg),
+					// 	ProtectedFromScaleIn: aws.Bool(true),
+					// })
+					// if err != nil {
+					// 	util.FatalLog("Unable to enable scale-in protection", err)
+					// }
+					// instanceProtection = true
+				}
+
+				targetMessage := resp.Messages[0]
+
+				// Remove message from queue now that we have it
+				_, err = sqsClient.DeleteMessage(ctx, &sqs.DeleteMessageInput{
+					QueueUrl:      urlResult.QueueUrl,          // Required
+					ReceiptHandle: targetMessage.ReceiptHandle, // Required
+				})
+				if err != nil {
+					util.FatalLog("Unable to delete aws sqs message", err)
+				}
+
+				// Offload to a coroutine
+				wg.Add(1)
+				go processMessage(&wg, ctx, &targetMessage, &clients, &metaData)
+			}
 		}
+
+		wg.Wait()
+
+		// Unprotect this instance from being destroyed while processing
+		// _, err = asgClient.SetInstanceProtection(ctx, &autoscaling.SetInstanceProtectionInput{
+		// 	InstanceIds:          []string{instanceID},
+		// 	AutoScalingGroupName: aws.String(asg),
+		// 	ProtectedFromScaleIn: aws.Bool(false),
+		// })
+		// if err != nil {
+		// 	util.FatalLog("Unable to enable scale-in protection", err)
+		// }
+		// instanceProtection = true
 	}
 }

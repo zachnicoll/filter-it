@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -15,7 +16,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func processMessage(ctx context.Context, msg *sqsTypes.Message, clients *util.Clients, metaData *util.MetaData) {
+func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Message, clients *util.Clients, metaData *util.MetaData) {
+	defer wg.Done()
+
 	// Get DynamoDB image info from message body
 	result, err := clients.DynamoDb.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: metaData.ImageTable,
