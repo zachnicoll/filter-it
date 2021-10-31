@@ -42,7 +42,7 @@ export const useUploadImage = (): HookReturn => {
 
     dispatchProgress({
       type: "UPDATE_IMAGE",
-      payload: { id: queueResponse.documentID },
+      payload: { id: queueResponse.id },
     });
   };
 

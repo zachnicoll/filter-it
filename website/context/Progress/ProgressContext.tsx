@@ -35,25 +35,33 @@ const ProgressProvider: React.FC = ({ children }) => {
   const intervalRef = useRef<any>(undefined);
 
   const checkImageProgress = async (): Promise<void> => {
+    console.log(progressState);
     if (progressState.id) {
       let shouldClearState = false;
 
-      const progress = await API.progress.get(progressState.id);
+      const progress = await API.progress.post(progressState.id);
+      console.error("HUH");
+      console.log(progress);
 
-      if (progress === Progress.DONE) {
-        toastSuccess("Image processed successfully!");
+      if (progress.progress === Progress.DONE) {
+        toastSuccess(
+          `Image processed successfully!\nLink: ${progress.imageurl}`
+        );
         shouldClearState = true;
-      } else if (progress === Progress.FAILED) {
+      } else if (progress.progress === Progress.FAILED) {
         toastError(
           "Failed to process image, please try again",
           new Error("Image Processing Failed")
         );
         shouldClearState = true;
-      } else if (progress === Progress.PROCESSING || progress === Progress.READY) {
+      } else if (
+        progress.progress === Progress.PROCESSING ||
+        progress.progress === Progress.READY
+      ) {
         intervalRef.current = setInterval(() => {
           if (progressState.notifyReference) {
             toastUpdate(progressState.notifyReference as string, {
-              type: toast.TYPE.SUCCESS,
+              type: toast.TYPE.INFO,
             });
           }
         }, 5000);
