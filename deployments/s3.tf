@@ -16,9 +16,9 @@ resource "aws_s3_bucket" "image_bucket" {
     max_age_seconds = 3000
   }
 
-  lifecycle {
-    prevent_destroy = true
-  }
+#  lifecycle {
+#    prevent_destroy = true
+#  }
 }
 
 resource "aws_s3_bucket" "website_bucket" {
@@ -32,10 +32,26 @@ resource "aws_s3_bucket" "website_bucket" {
   }
 
   force_destroy = true
-  lifecycle {
-    prevent_destroy = false
+#  lifecycle {
+#    prevent_destroy = false
+#  }
+}
+
+data "aws_iam_policy_document" "website_policy" {
+  statement {
+    actions = [
+      "s3:GetObject"
+    ]
+    principals {
+      identifiers = ["*"]
+      type        = "AWS"
+    }
+    resources = [
+      "arn:aws:s3:::${var.website_bucket}/*"
+    ]
   }
 }
+
 
 # TODO: Get auto uploading of website working
 # resource "aws_s3_bucket_object" "website_objects" {
