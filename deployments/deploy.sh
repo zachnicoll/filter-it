@@ -18,6 +18,8 @@ sudo apt-get install docker-ce -y
 
 sudo usermod -a -G docker ubuntu
 
+docker pull znicoll/filter-it-image-processor
+
 sudo apt-get install jq -y
 
 TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"`
@@ -36,9 +38,6 @@ After=docker.service
 [Service]
 TimeoutStartSec=0
 Restart=always
-ExecStartPre=-/usr/bin/docker exec znicoll/filter-it-image-processor stop
-ExecStartPre=-/usr/bin/docker rm znicoll/filter-it-image-processor
-ExecStartPre=/usr/bin/docker pull znicoll/filter-it-image-processor
 ExecStart=/usr/bin/docker run \
   -e S3_BUCKET=${AWS_S3_BUCKET} \
   -e AWS_IMAGE_TABLE=${AWS_TABLE} \
