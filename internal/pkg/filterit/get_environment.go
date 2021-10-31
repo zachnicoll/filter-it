@@ -7,10 +7,10 @@ import (
 
 func getEnvironment() (asg string, s3Bucket string, imageTable string, sqsQueue string) {
 	// Get AutoScaling Group
-	asg = os.Getenv("AS_GROUP")
-	if asg == "" {
-		log.Fatalln("Unable to find autoscaling group")
-	}
+	asg = "" //os.Getenv("AS_GROUP")
+	// if asg == "" {
+	// log.Fatalln("Unable to find autoscaling group")
+	// }
 
 	// Get S3 Bucket
 	s3Bucket = os.Getenv("S3_BUCKET")
