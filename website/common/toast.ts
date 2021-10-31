@@ -22,11 +22,19 @@ export const toastError = (msg: string, err: Error): ReactText => {
   return toast(msg, defaultToastOptions);
 };
 
-export const toastUpdate = (msg: string): void => {
+export const toastSuccess = (msg: string): ReactText => {
   toast.dismiss();
-  toast.update(msg, {
+  return toast(msg, {
     ...defaultToastOptions,
     type: toast.TYPE.SUCCESS,
+  });
+};
+
+export const toastUpdate = (toastId: string, opts: ToastOptions): void => {
+  toast.dismiss();
+  toast.update(toastId, {
+    ...defaultToastOptions,
+    ...opts,
   });
 };
 

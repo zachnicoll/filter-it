@@ -1,16 +1,18 @@
 import React, { createRef, useState } from "react";
 import { DropzoneRef, FileWithPath, useDropzone } from "react-dropzone";
 import { Filter, PreviewFileWithPath } from "../../api/types";
-import API from "../../api";
 import { toastError } from "../../common/toast";
 import * as Styles from "./UploadBox.styles";
 import { filterRadioButtons } from "common/util";
 import { DragNDrop } from "./molecules/DragNDrop";
 import { useUploadImage } from "hooks/useUploadImage";
 import { Spinner } from "components";
+import { useRouter } from "next/router";
+import routes from "common/routes";
 
 export const UploadBox = () => {
-  const {upload, uploading} = useUploadImage();
+  const router = useRouter();
+  const { upload, uploading, dispatchUploading } = useUploadImage();
 
   const dropzoneRef = createRef<DropzoneRef>();
   const [file, setFile] = useState<PreviewFileWithPath>();
@@ -42,8 +44,17 @@ export const UploadBox = () => {
   });
 
   const uploadImage = async () => {
-    if (file && author && title && filter) {
-      await upload(author, title, filter, file);
+    if (file && author && title && filter !== undefined) {
+      dispatchUploading(true);
+
+      try {
+        await upload(author, title, filter, file);
+        router.push(routes.Feed.path);
+      } catch (e) {
+        toastError("Image Upload Failed. Please try again later.", e as Error);
+      }
+
+      dispatchUploading(false);
     } else {
       toastError("All Fields Required!", new Error("Empty Upload Fields"));
     }
@@ -69,7 +80,11 @@ export const UploadBox = () => {
           <Styles.Container {...getRootProps()}>
             <input {...getInputProps()} />
             <div onClick={handleOpenDialog}>
-              {uploading ? <Spinner type="Oval"/> : <Styles.Img src={file.preview} />}
+              {uploading ? (
+                <Spinner type="Oval" />
+              ) : (
+                <Styles.Img src={file.preview} />
+              )}
             </div>
           </Styles.Container>
 

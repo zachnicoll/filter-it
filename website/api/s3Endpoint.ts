@@ -1,4 +1,3 @@
-import axiosInstance from "../common/axiosInstance";
 import { FileWithPath } from "react-dropzone";
 import axios from "axios";
 

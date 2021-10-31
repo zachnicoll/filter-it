@@ -6,7 +6,8 @@ import { Progress } from "api/types";
 
 export type ProgressAction =
   | { type: "UPDATE_IMAGE"; payload: { id: string } }
-  | { type: "UPDATE_PROGRESS"; payload: { status: Progress } };
+  | { type: "UPDATE_PROGRESS"; payload: { status: Progress } }
+  | { type: "CLEAR" };
 
 export interface ProgressContextState {
   id?: string;
