@@ -18,10 +18,17 @@ sudo apt-get install docker-ce -y
 
 sudo usermod -a -G docker ubuntu
 
-export AWS_IMAGE_TABLE=${AWS_TABLE}
-export AWS_SQS_QUEUE=${AWS_SQS}
-export AWS_REDIS_ADDRESS=${AWS_REDIS}
-export S3_BUCKET=${AWS_S3_BUCKET}
+sudo apt-get install jq -y
+
+TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-
+ttl-seconds: 21600"`
+
+META_DATA=`curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/iden
+tity-credentials/ec2/security-credentials/ec2-instance`
+
+export AWS_ACCESS_KEY_ID=$(jq ".AccessKeyId" <<< $META_DATA)
+export AWS_SECRET_ACCESS_KEY=$(jq ".SecretAccessKey" <<< $META_DATA)
+export AWS_SESSION_TOKEN=$(jq ".Token" <<< $META_DATA)
 
 sudo touch /etc/systemd/system/docker.filterit.service
 echo "[Unit]
@@ -32,25 +39,18 @@ After=docker.service
 [Service]
 TimeoutStartSec=0
 Restart=always
-Environment=\"S3_BUCKET=$(echo $S3_BUCKET)\"
-Environment=\"AWS_IMAGE_TABLE=$(echo $AWS_IMAGE_TABLE)\"
-Environment=\"AWS_SQS_QUEUE=$(echo $AWS_SQS_QUEUE)\"
-Environment=\"AWS_REDIS_ADDRESS=$(echo $AWS_REDIS_ADDRESS)\"
-Environment=\"AWS_ACCESS_KEY_ID=$(echo $AWS_KEY_ID)\"
-Environment=\"AWS_SECRET_ACCESS_KEY=$(echo $AWS_SECRET_ACCESS_KEY)\"
-Environment=\"AWS_SESSION_TOKEN=$(echo $AWS_SESSION_TOKEN)\"
-ExecStartPre=-/usr/bin/docker exec %n stop
-ExecStartPre=-/usr/bin/docker rm %n
-ExecStartPre=/usr/bin/docker pull znicoll/filter-it-image-processor
-ExecStart=/usr/bin/docker run --rm --name %n \
-  -e S3_BUCKET=$(echo $S3_BUCKET) \
-  -e AWS_IMAGE_TABLE=$(echo $AWS_IMAGE_TABLE) \
-  -e AWS_SQS_QUEUE=$(echo $AWS_SQS_QUEUE) \
-  -e AWS_REDIS_ADDRESS=$(echo $AWS_REDIS_ADDRESS) \
-  -e AWS_ACCESS_KEY_ID=$(echo $AWS_KEY_ID) \
-  -e AWS_SECRET_ACCESS_KEY=$(echo $AWS_SECRET_ACCESS_KEY) \
-  -e AWS_SESSION_TOKEN=$(echo $AWS_SESSION_TOKEN) \
-  znicoll/filter-it-image-processor
+ExecStartPre=-/usr/bin/docker exec znicoll/filter-it-image-processor:latest stop
+ExecStartPre=-/usr/bin/docker rm znicoll/filter-it-image-processor:latest
+ExecStartPre=/usr/bin/docker pull znicoll/filter-it-image-processor:latest
+ExecStart=/usr/bin/docker run --rm \
+  -e S3_BUCKET=${AWS_S3_BUCKET} \
+  -e AWS_IMAGE_TABLE=${AWS_TABLE} \
+  -e AWS_SQS_QUEUE=${AWS_SQS} \
+  -e AWS_REDIS_ADDRESS=${AWS_REDIS} \
+  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+  -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
+  znicoll/filter-it-image-processor:latest
 
 [Install]
 WantedBy=multi-user.target" | sudo dd of=/etc/systemd/system/docker.filterit.service
