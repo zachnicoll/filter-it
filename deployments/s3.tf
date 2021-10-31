@@ -1,9 +1,9 @@
 variable "image_bucket" {
-  default = "filter-it-images"
+  default = "filterit-images"
 }
 
 variable "website_bucket" {
-  default = "filter-it-staticsite"
+  default = "filterit-staticsite"
 }
 
 resource "aws_s3_bucket" "image_bucket" {
