@@ -1,10 +1,12 @@
 import { FeedCard, PageWrapper, Spinner } from "components";
+import { useSearch } from "context";
 import { useImages } from "hooks/useImages";
 import type { NextPage } from "next";
 import React from "react";
 
 const Feed: NextPage = () => {
-  const { images, loading } = useImages();
+  const { searchState } = useSearch();
+  const { images, loading } = useImages(searchState.search);
 
   return (
     <PageWrapper>

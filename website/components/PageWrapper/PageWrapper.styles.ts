@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
-import { Search } from "@material-ui/icons";
 import theme, { colors } from "styles/colors";
+import Select from "react-select";
 
 const HEADER_HEIGHT = "3em";
 
@@ -79,3 +79,7 @@ export const Mobile = {
     height: fit-content;
   `,
 };
+
+export const Picker = styled(Select)`
+  flex: 1;
+`;
