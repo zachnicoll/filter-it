@@ -4,6 +4,7 @@ import (
 	"aws-scalable-image-filter/internal/pkg/util"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -110,6 +111,10 @@ func HandleRequest(_ctx context.Context, request events.APIGatewayProxyRequest) 
 	util.SortDocuments(documents)
 
 	s3BucketName := os.Getenv("S3_BUCKET")
+	if s3BucketName == "" {
+		return util.InternalServerError(errors.New("S3 Bucket was unable to be loaded from env vars")), nil
+	}
+
 	s3Client := s3.NewFromConfig(cfg)
 	s3PresignClient := s3.NewPresignClient(s3Client)
 
