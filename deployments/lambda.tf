@@ -70,6 +70,7 @@ resource "aws_lambda_function" "lambda_feed" {
     variables = {
       AWS_IMAGE_TABLE   = var.dynamodb_name
       AWS_REDIS_ADDRESS = element(aws_elasticache_cluster.redis.cache_nodes, 0).address
+      S3_BUCKET         = var.image_bucket
     }
   }
 }
@@ -90,8 +91,8 @@ resource "aws_lambda_function" "lambda_progress" {
 
   environment {
     variables = {
-      AWS_IMAGE_TABLE   = var.dynamodb_name
-      S3_BUCKET = var.image_bucket
+      AWS_IMAGE_TABLE = var.dynamodb_name
+      S3_BUCKET       = var.image_bucket
     }
   }
 

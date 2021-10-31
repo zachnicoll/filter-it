@@ -37,7 +37,8 @@ resource "aws_iam_policy" "ec2_exec_sqs" {
       "Action": [
         "sqs:ReceiveMessage",
         "sqs:SendMessage",
-        "sqs:GetQueueUrl"
+        "sqs:GetQueueUrl",
+        "sqs:DeleteMessage"
       ],
       "Resource": "${aws_sqs_queue.filterit-queue.arn}",
       "Effect": "Allow"
