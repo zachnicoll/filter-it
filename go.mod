@@ -15,6 +15,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.10.0
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/google/uuid v1.3.0
+	gopkg.in/gographics/imagick.v2 v2.6.0
 )
 
 require (
@@ -34,6 +35,5 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
-	gopkg.in/gographics/imagick.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
