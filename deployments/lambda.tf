@@ -19,6 +19,11 @@ resource "aws_lambda_function" "lambda_upload" {
   }
 }
 
+output "upload_output" {
+  value       = "${aws_api_gateway_stage.prod.invoke_url}${aws_api_gateway_resource.uploadResource.path}"
+  description = "The public upload link for invoking upload gateway"
+}
+
 /* Lambda Queue */
 resource "aws_lambda_function" "lambda_queue" {
   filename         = data.archive_file.lambda_queue_zip.output_path
@@ -40,6 +45,11 @@ resource "aws_lambda_function" "lambda_queue" {
     subnet_ids         = [aws_subnet.filterit-subnet-private-1.id]
     security_group_ids = [aws_security_group.filterit-sg.id]
   }
+}
+
+output "queue_output" {
+  value       = "${aws_api_gateway_stage.prod.invoke_url}${aws_api_gateway_resource.queueResource.path}"
+  description = "The public queue link for invoking upload gateway"
 }
 
 /* Lambda Feed*/
@@ -64,6 +74,11 @@ resource "aws_lambda_function" "lambda_feed" {
   }
 }
 
+output "feed_output" {
+  value       = "${aws_api_gateway_stage.prod.invoke_url}${aws_api_gateway_resource.feedResource.path}"
+  description = "The public feed link for invoking upload gateway"
+}
+
 /* Lambda Progress */
 resource "aws_lambda_function" "lambda_progress" {
   filename         = data.archive_file.lambda_progress_zip.output_path
@@ -84,4 +99,9 @@ resource "aws_lambda_function" "lambda_progress" {
     subnet_ids         = [aws_subnet.filterit-subnet-private-1.id]
     security_group_ids = [aws_security_group.filterit-sg.id]
   }
+}
+
+output "progress_output" {
+  value       = "${aws_api_gateway_stage.prod.invoke_url}${aws_api_gateway_resource.progressResource.path}"
+  description = "The public progress link for invoking upload gateway"
 }

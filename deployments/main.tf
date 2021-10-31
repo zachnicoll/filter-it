@@ -15,3 +15,8 @@ terraform {
 provider "aws" {
   region = "ap-southeast-2"
 }
+
+output "invoke_output" {
+  value       = aws_api_gateway_stage.prod.invoke_url
+  description = "The public IP address of gateway stage"
+}

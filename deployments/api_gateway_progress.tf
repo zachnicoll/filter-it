@@ -25,7 +25,7 @@ resource "aws_api_gateway_integration" "progressIntegration" {
   http_method             = aws_api_gateway_method.progressPostMethod.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.lambda_queue.invoke_arn
+  uri                     = aws_lambda_function.lambda_progress.invoke_arn
 }
 
 resource "aws_api_gateway_integration_response" "progressIntResponse" {
@@ -53,7 +53,7 @@ resource "aws_api_gateway_method_settings" "progressMethod" {
 resource "aws_lambda_permission" "progress_lambda_permission" {
   statement_id  = "AllowQueueAPIInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.lambda_queue.function_name
+  function_name = aws_lambda_function.lambda_progress.function_name
   principal     = "apigateway.amazonaws.com"
 
   # The /*/*/* part allows invocation from any stage, method and resource path
