@@ -30,5 +30,5 @@ func getEnvironment() (asg string, s3Bucket string, imageTable string, sqsQueue 
 		log.Fatalln("Unable to find sqs queue name")
 	}
 
-	return asg, s3Bucket, imageTable, sqsQueue,
+	return asg, s3Bucket, imageTable, sqsQueue
 }
