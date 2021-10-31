@@ -4,7 +4,7 @@ import React from "react";
 import Head from "next/head";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
-import { ProgressProvider } from "context";
+import { ProgressProvider, SearchProvider } from "context";
 
 function App({ Component, pageProps }: AppProps) {
   return (
@@ -27,10 +27,11 @@ function App({ Component, pageProps }: AppProps) {
       </Head>
 
       <ToastContainer />
-
-      <ProgressProvider>
-        <Component {...pageProps} />
-      </ProgressProvider>
+      <SearchProvider>
+        <ProgressProvider>
+          <Component {...pageProps} />
+        </ProgressProvider>
+      </SearchProvider>
     </>
   );
 }

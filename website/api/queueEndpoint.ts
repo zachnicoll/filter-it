@@ -1,7 +1,7 @@
 import axiosInstance from "common/axiosInstance";
 import { QueueRequestBody, QueueResponse } from "./types";
 
-const ENDPOINT = "/queue"
+const ENDPOINT = "/queue";
 
 export const post = async (
   params: QueueRequestBody

@@ -1,7 +1,7 @@
 import { AxiosError } from "axios";
 import { toastError } from "common/toast";
-import { ImageDocument } from "api/types";
-import { useEffect, useState } from "react";
+import { Filter, ImageDocument } from "api/types";
+import { useCallback, useEffect, useState } from "react";
 import API from "api";
 
 interface HookReturn {
@@ -52,18 +52,16 @@ const mockData = [
   },
 ];
 
-export const useImages = (): HookReturn => {
+export const useImages = (filter: Filter | null): HookReturn => {
   const [images, setImages] = useState<ImageDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetch = async (): Promise<void> => {
+  const fetch = useCallback(async (): Promise<void> => {
     setLoading(true);
 
     try {
       // Replace with real API request when lambda working
-      // const data = await API.feed.get();
-
-      const data = mockData;
+      const data = await API.feed.get(filter);
       setImages(data);
     } catch (e) {
       const err = e as AxiosError;
@@ -71,11 +69,11 @@ export const useImages = (): HookReturn => {
     }
 
     setLoading(false);
-  };
+  }, [filter]);
 
   useEffect(() => {
     fetch();
-  }, []);
+  }, [fetch]);
 
   return { images, loading };
 };
