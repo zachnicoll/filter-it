@@ -35,17 +35,16 @@ const ProgressProvider: React.FC = ({ children }) => {
   const intervalRef = useRef<any>(undefined);
 
   const checkImageProgress = async (): Promise<void> => {
-    console.log(progressState);
     if (progressState.id) {
       let shouldClearState = false;
 
       const progress = await API.progress.post(progressState.id);
-      console.error("HUH");
-      console.log(progress);
 
       if (progress.progress === Progress.DONE) {
         toastSuccess(
-          `Image processed successfully!\nLink: ${progress.imageurl}`
+          `Image processed successfully!\nLink: ${decodeURIComponent(
+            progress.imageurl
+          )}`
         );
         shouldClearState = true;
       } else if (progress.progress === Progress.FAILED) {
