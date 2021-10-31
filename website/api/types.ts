@@ -20,6 +20,7 @@ export interface ImageDocument {
   tag: Filter; // Filter that has been applied
   progress: Progress; // Current progress of image processing in SQS
   image: string; // S3 filename of image related to this document
+  image_url: string;
 }
 
 export interface UploadResponse {

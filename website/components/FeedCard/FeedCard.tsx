@@ -12,7 +12,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({ image }) => {
     <Styles.Container>
       <Styles.ImageContainer>
         <img
-          src={decodeURIComponent(image.image)}
+          src={decodeURIComponent(image.image_url)}
           width="100%"
           height="100%"
           alt="image"

@@ -8,7 +8,7 @@ export const get = async (filter: {
   label: string;
 }): Promise<ImageDocument[]> => {
   const res = await axiosInstance.get<ImageDocument[]>(
-    filter.value ? `${ENDPOINT}?filter=${filter.value}` : ENDPOINT
+    filter?.value ? `${ENDPOINT}?filter=${filter.value}` : ENDPOINT
   );
   return res.data;
 };
