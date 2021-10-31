@@ -1,11 +1,8 @@
 package util
 
 import (
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,8 +11,14 @@ import (
 	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 )
 
 func InternalServerError(err error) *events.APIGatewayProxyResponse {
@@ -94,6 +97,7 @@ func FetchInstanceID() string {
 	if err != nil {
 		log.Fatalln("Unable to find instance ID")
 	}
+
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
@@ -112,27 +116,25 @@ func FetchInstanceID() string {
 	return instanceID
 }
 
-func FatalLog (msg string, err error) {
+func FatalLog(msg string, err error) {
 	log.Println(msg)
 	log.Fatalln(err)
 }
 
 func SafeFail(
-	sqsService *sqs.SQS,
-	dbService *dynamodb.DynamoDB,
-	asgService *autoscaling.AutoScaling,
+	sqsService *sqs.Client,
+	dbService *dynamodb.Client,
+	asgService *autoscaling.Client,
 	asg string,
 	instanceID string,
 	imageTable string,
 	queueURL string,
 	documentID string,
 ) {
-	result, err := dbService.GetItem(&dynamodb.GetItemInput{
+	result, err := dbService.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String(imageTable),
-		Key: map[string]*dynamodb.AttributeValue{
-			"id": {
-				N: aws.String(documentID),
-			},
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: documentID},
 		},
 	})
 	if err != nil {
@@ -141,14 +143,14 @@ func SafeFail(
 
 	// Unmarshal image document
 	var imageDocument ImageDocument
-	err = dynamodbattribute.UnmarshalMap(result.Item, &imageDocument)
+	err = attributevalue.UnmarshalMap(result.Item, &imageDocument)
 	if err != nil {
 		FatalLog("Failed to unmarshal sqs document for failsafe", err)
 	}
 
 	imageDocument.Progress = READY
 
-	imageDocumentMap, err := dynamodbattribute.MarshalMap(imageDocument)
+	imageDocumentMap, err := attributevalue.MarshalMap(imageDocument)
 	if err != nil {
 		FatalLog("Failed to marshal sqs document for failsafe", err)
 	}
@@ -157,12 +159,12 @@ func SafeFail(
 		Item:      imageDocumentMap,
 		TableName: aws.String(imageTable),
 	}
-	_, err = dbService.PutItem(input)
+	_, err = dbService.PutItem(context.TODO(), input)
 	if err != nil {
 		FatalLog("Failed to update sqs document for failsafe", err)
 	}
 
-	_, err = sqsService.SendMessage(&sqs.SendMessageInput{
+	_, err = sqsService.SendMessage(context.TODO(), &sqs.SendMessageInput{
 		MessageBody: aws.String(documentID),
 		QueueUrl:    aws.String(queueURL),
 	})
@@ -170,8 +172,8 @@ func SafeFail(
 		FatalLog("Failed to safely put SQS message back into queue for failsafe", err)
 	}
 
-	_, err = asgService.SetInstanceProtection(&autoscaling.SetInstanceProtectionInput{
-		InstanceIds: []*string{aws.String(instanceID)},
+	_, err = asgService.SetInstanceProtection(context.TODO(), &autoscaling.SetInstanceProtectionInput{
+		InstanceIds:          []string{instanceID},
 		AutoScalingGroupName: aws.String(asg),
 		ProtectedFromScaleIn: aws.Bool(true),
 	})
