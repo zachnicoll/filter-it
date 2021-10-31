@@ -14,6 +14,7 @@ import progressReducer, {
   ProgressAction,
   ProgressContextState,
 } from "./reducer";
+import { useSearch } from "../Search/SearchContext";
 
 interface ProgressContextType {
   dispatchProgress: Dispatch<ProgressAction>;
@@ -31,6 +32,7 @@ const ProgressProvider: React.FC = ({ children }) => {
     progressReducer,
     defaultState
   );
+  const { dispatchSearch } = useSearch();
 
   const intervalRef = useRef<any>(undefined);
 
@@ -41,11 +43,10 @@ const ProgressProvider: React.FC = ({ children }) => {
       const progress = await API.progress.post(progressState.id);
 
       if (progress.progress === Progress.DONE) {
-        toastSuccess(
-          `Image processed successfully!\nLink: ${decodeURIComponent(
-            progress.imageurl
-          )}`
-        );
+        toastSuccess(`Image processed successfully!`);
+
+        dispatchSearch({ type: "SEARCH", payload: null });
+
         shouldClearState = true;
       } else if (progress.progress === Progress.FAILED) {
         toastError(
@@ -76,7 +77,7 @@ const ProgressProvider: React.FC = ({ children }) => {
   useEffect(() => {
     checkImageProgress();
 
-    return () => intervalRef.current && clearInterval(intervalRef.current);
+    // return () => intervalRef.current && clearInterval(intervalRef.current);
   }, [progressState]);
 
   return (
