@@ -143,18 +143,3 @@ resource "aws_iam_role_policy_attachment" "lambda_dynamodb" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = aws_iam_policy.lambda_exec_dynamodb.arn
 }
-
-data "aws_iam_policy_document" "website_policy" {
-  statement {
-    actions = [
-      "s3:GetObject"
-    ]
-    principals {
-      identifiers = ["*"]
-      type        = "AWS"
-    }
-    resources = [
-      "arn:aws:s3:::${var.website_bucket}/*"
-    ]
-  }
-}

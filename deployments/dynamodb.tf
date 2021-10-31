@@ -39,7 +39,7 @@ resource "aws_dynamodb_table" "ddbtable" {
     projection_type = "ALL"
   }
 
-  lifecycle {
-    prevent_destroy = true
-  }
+#  lifecycle {
+#    prevent_destroy = true
+#  }
 }

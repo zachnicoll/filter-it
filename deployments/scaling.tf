@@ -25,7 +25,7 @@ resource "aws_autoscaling_group" "filterit-asg" {
   desired_capacity     = 1
   max_size             = 4
 
-  vpc_zone_identifier = [aws_subnet.filterit-subnet-public-1.id]
+  vpc_zone_identifier = [aws_subnet.filterit-subnet-public-1.id, aws_subnet.filterit-subnet-private-1.id]
 
   launch_configuration = aws_launch_configuration.filterit-lc.name
 
@@ -51,6 +51,7 @@ resource "aws_launch_configuration" "filterit-lc" {
   image_id = aws_ami_from_instance.image_processor_ami.id
   instance_type = "t2.micro"
   key_name = aws_key_pair.image_processor_key.key_name
+  iam_instance_profile = aws_iam_instance_profile.ec2_iam_profile.name
 
 
   security_groups = [ aws_security_group.filterit-sg.id ]
