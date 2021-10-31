@@ -26,6 +26,7 @@ data "template_file" "deploy_script" {
     AWS_SQS       = var.sqs_name
     AWS_REDIS     = element(aws_elasticache_cluster.redis.cache_nodes, 0).address
     AWS_S3_BUCKET = var.image_bucket
+    AWS_REGION    = "ap-southeast-2"
   }
 }
 
