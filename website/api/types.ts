@@ -40,5 +40,11 @@ export interface QueueRequestBody {
 }
 
 export interface QueueResponse {
-  documentID: string;
+  id: string;
+}
+
+export interface ProgressResponse {
+  id: string;
+  progress: Progress;
+  imageurl: string;
 }

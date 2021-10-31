@@ -1,9 +1,12 @@
 import axiosInstance from "common/axiosInstance";
-import { Progress } from "./types";
+import { Progress, ProgressResponse } from "./types";
 
 const ENDPOINT = "/progress";
 
-export const get = async (id: string): Promise<Progress> => {
-  const res = await axiosInstance.get<Progress>(`${ENDPOINT}?id=${id}`);
+export const post = async (id: string): Promise<ProgressResponse> => {
+  const res = await axiosInstance.post<ProgressResponse>(
+    `${ENDPOINT}`,
+    JSON.stringify({ id })
+  );
   return res.data;
 };
