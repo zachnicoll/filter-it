@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
 func getClients(cfg aws.Config) (DDB *dynamodb.Client, SQS *sqs.Client, S3 *s3.Client, ASG *autoscaling.Client, Redis *redis.Client) {
