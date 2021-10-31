@@ -16,6 +16,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	sqsTypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
+
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
@@ -121,20 +123,17 @@ func FatalLog(msg string, err error) {
 	log.Fatalln(err)
 }
 
-func SafeFail(
-	sqsService *sqs.Client,
-	dbService *dynamodb.Client,
-	asgService *autoscaling.Client,
-	asg string,
-	instanceID string,
-	imageTable string,
-	queueURL string,
-	documentID string,
+func safeFail(
+	client *Clients,
+	metaData *MetaData,
+	msg *sqsTypes.Message,
 ) {
-	result, err := dbService.GetItem(context.TODO(), &dynamodb.GetItemInput{
-		TableName: aws.String(imageTable),
+	documentID := msg.Body
+
+	result, err := client.DynamoDb.GetItem(context.TODO(), &dynamodb.GetItemInput{
+		TableName: metaData.ImageTable,
 		Key: map[string]types.AttributeValue{
-			"id": &types.AttributeValueMemberS{Value: documentID},
+			"id": &types.AttributeValueMemberS{Value: *documentID},
 		},
 	})
 	if err != nil {
@@ -157,27 +156,35 @@ func SafeFail(
 
 	input := &dynamodb.PutItemInput{
 		Item:      imageDocumentMap,
-		TableName: aws.String(imageTable),
+		TableName: metaData.ImageTable,
 	}
-	_, err = dbService.PutItem(context.TODO(), input)
+	_, err = client.DynamoDb.PutItem(context.TODO(), input)
 	if err != nil {
 		FatalLog("Failed to update sqs document for failsafe", err)
 	}
 
-	_, err = sqsService.SendMessage(context.TODO(), &sqs.SendMessageInput{
-		MessageBody: aws.String(documentID),
-		QueueUrl:    aws.String(queueURL),
+	_, err = client.SQS.SendMessage(context.TODO(), &sqs.SendMessageInput{
+		MessageBody: documentID,
+		QueueUrl:    metaData.SQSUrl,
 	})
 	if err != nil {
 		FatalLog("Failed to safely put SQS message back into queue for failsafe", err)
 	}
 
-	_, err = asgService.SetInstanceProtection(context.TODO(), &autoscaling.SetInstanceProtectionInput{
-		InstanceIds:          []string{instanceID},
-		AutoScalingGroupName: aws.String(asg),
+	_, err = client.ASG.SetInstanceProtection(context.TODO(), &autoscaling.SetInstanceProtectionInput{
+		InstanceIds:          []string{*metaData.InstanceID},
+		AutoScalingGroupName: metaData.ASGName,
 		ProtectedFromScaleIn: aws.Bool(true),
 	})
 	if err != nil {
 		FatalLog("Failed to disable scale-in protection for failsafe", err)
 	}
+}
+
+func SafeFailAndLog(clients *Clients,
+	metaData *MetaData,
+	sqsMsg *sqsTypes.Message,
+	errMsg string, err error) {
+	safeFail(clients, metaData, sqsMsg)
+	FatalLog(errMsg, err)
 }
