@@ -18,6 +18,11 @@ sudo apt-get install docker-ce -y
 
 sudo usermod -a -G docker ubuntu
 
+export AWS_IMAGE_TABLE=${AWS_TABLE}
+export AWS_SQS_QUEUE=${AWS_SQS}
+export AWS_REDIS_ADDRESS=${AWS_REDIS}
+export S3_BUCKET=${AWS_S3_BUCKET}
+
 sudo touch /etc/systemd/system/docker.filterit.service
 echo "[Unit]
 Description=FilterIt Image Processor Container
@@ -27,10 +32,25 @@ After=docker.service
 [Service]
 TimeoutStartSec=0
 Restart=always
+Environment=\"S3_BUCKET=$(echo $S3_BUCKET)\"
+Environment=\"AWS_IMAGE_TABLE=$(echo $AWS_IMAGE_TABLE)\"
+Environment=\"AWS_SQS_QUEUE=$(echo $AWS_SQS_QUEUE)\"
+Environment=\"AWS_REDIS_ADDRESS=$(echo $AWS_REDIS_ADDRESS)\"
+Environment=\"AWS_ACCESS_KEY_ID=$(echo $AWS_KEY_ID)\"
+Environment=\"AWS_SECRET_ACCESS_KEY=$(echo $AWS_SECRET_ACCESS_KEY)\"
+Environment=\"AWS_SESSION_TOKEN=$(echo $AWS_SESSION_TOKEN)\"
 ExecStartPre=-/usr/bin/docker exec %n stop
 ExecStartPre=-/usr/bin/docker rm %n
 ExecStartPre=/usr/bin/docker pull znicoll/filter-it-image-processor
-ExecStart=/usr/bin/docker run --rm --name %n znicoll/filter-it-image-processor
+ExecStart=/usr/bin/docker run --rm --name %n \
+  -e S3_BUCKET=$(echo $S3_BUCKET) \
+  -e AWS_IMAGE_TABLE=$(echo $AWS_IMAGE_TABLE) \
+  -e AWS_SQS_QUEUE=$(echo $AWS_SQS_QUEUE) \
+  -e AWS_REDIS_ADDRESS=$(echo $AWS_REDIS_ADDRESS) \
+  -e AWS_ACCESS_KEY_ID=$(echo $AWS_KEY_ID) \
+  -e AWS_SECRET_ACCESS_KEY=$(echo $AWS_SECRET_ACCESS_KEY) \
+  -e AWS_SESSION_TOKEN=$(echo $AWS_SESSION_TOKEN) \
+  znicoll/filter-it-image-processor
 
 [Install]
 WantedBy=multi-user.target" | sudo dd of=/etc/systemd/system/docker.filterit.service
