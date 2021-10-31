@@ -31,6 +31,8 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 		util.SafeFailAndLog(clients, metaData, &queueMsg, "Could not unmarshal queue message", err)
 	}
 
+	log.Println("Getting image document from DynamoDb...")
+
 	// Get DynamoDB image info from message body
 	result, err := clients.DynamoDb.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: metaData.ImageTable,
@@ -54,6 +56,8 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 		util.SafeFailAndLog(clients, metaData, &queueMsg, "Unable to unmarshal aws sqs dynamodb status", err)
 	}
 
+	log.Println("Updating image document in DynamoDb with Processing progress...")
+
 	// Mark image document as processing
 	imageDocument.Progress = util.PROCESSING
 
@@ -62,7 +66,7 @@ func processMessage(wg *sync.WaitGroup, ctx context.Context, msg *sqsTypes.Messa
 		util.SafeFailAndLog(clients, metaData, &queueMsg, "Unable to update aws sqs dynamodb (processing)", err)
 	}
 
-	util.InvalidateCache(ctx, fmt.Sprintf("%d", imageDocument.Tag), clients.Redis)
+	log.Println("Getting original image from S3...")
 
 	// Get image from S3
 	s3Object, err := clients.S3.GetObject(ctx, &s3.GetObjectInput{

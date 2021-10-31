@@ -130,6 +130,8 @@ func UpdateDocument(ctx context.Context, clients *Clients, table *string, item *
 		return err
 	}
 
+	log.Println("Invalidating cache key", item.Tag)
+
 	InvalidateCache(ctx, fmt.Sprintf("%d", item.Tag), clients.Redis)
 
 	return nil
