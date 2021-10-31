@@ -51,3 +51,13 @@ type MetaData struct {
 	S3Bucket   *string
 	ASGName    *string
 }
+
+type ProgressRequest struct {
+	DocumentID string `json:"id"`
+}
+
+type ProgressResponse struct {
+	DocumentID string `json:"id"`
+	ImageURL string `json:"imageurl"`
+	Progress int `json:"progress"`
+}
