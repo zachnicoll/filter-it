@@ -32,7 +32,6 @@ const ProgressProvider: React.FC = ({ children }) => {
     progressReducer,
     defaultState
   );
-  const { dispatchSearch } = useSearch();
 
   const intervalRef = useRef<any>(undefined);
 

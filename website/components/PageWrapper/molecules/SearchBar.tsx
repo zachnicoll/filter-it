@@ -3,15 +3,16 @@ import * as Styles from "../PageWrapper.styles";
 import { Filter } from "api/types";
 import { useSearch } from "context";
 import theme from "styles/colors";
+import { filterStringMap } from "common/enum.maps";
 
 interface Option {
   value: Filter | null; label: string
 }
 
 const options: Option[] = [
-  { value: Filter.GRAYSCALE, label: "#grayscale" },
-  { value: Filter.INVERT, label: "#invert" },
-  { value: Filter.SEPIA, label: "#sepia" },
+  { value: Filter.GRAYSCALE, label: filterStringMap[Filter.GRAYSCALE] },
+  { value: Filter.INVERT, label: filterStringMap[Filter.INVERT] },
+  { value: Filter.SEPIA, label: filterStringMap[Filter.SEPIA] },
   { value: null, label: "#all" },
 ];
 
