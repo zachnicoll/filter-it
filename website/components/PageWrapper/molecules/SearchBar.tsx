@@ -4,7 +4,11 @@ import { Filter } from "api/types";
 import { useSearch } from "context";
 import theme from "styles/colors";
 
-const options: { value: Filter | null; label: string }[] = [
+interface Option {
+  value: Filter | null; label: string
+}
+
+const options: Option[] = [
   { value: Filter.GRAYSCALE, label: "#grayscale" },
   { value: Filter.INVERT, label: "#invert" },
   { value: Filter.SEPIA, label: "#sepia" },
@@ -12,7 +16,7 @@ const options: { value: Filter | null; label: string }[] = [
 ];
 
 export const SearchBar: React.FC = () => {
-  const { searchState, dispatchSearch } = useSearch();
+  const { dispatchSearch } = useSearch();
 
   return (
     <Styles.Picker
@@ -26,11 +30,10 @@ export const SearchBar: React.FC = () => {
           borderColor: theme.border,
         }),
       }}
-      value={searchState.search}
       onChange={(selected: unknown) => {
         dispatchSearch({
           type: "SEARCH",
-          payload: selected,
+          payload: (selected as Option).value,
         });
       }}
     />

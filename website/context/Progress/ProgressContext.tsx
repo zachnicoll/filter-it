@@ -1,6 +1,6 @@
 import API from "api";
 import { Progress } from "api/types";
-import { toastError, toastSuccess, toastUpdate } from "common/toast";
+import { toastError, toastShow, toastSuccess, toastUpdate } from "common/toast";
 import {
   Dispatch,
   createContext,
@@ -44,8 +44,7 @@ const ProgressProvider: React.FC = ({ children }) => {
 
       if (progress.progress === Progress.DONE) {
         toastSuccess(`Image processed successfully!`);
-
-        dispatchSearch({ type: "SEARCH", payload: null });
+        toastShow('Reload the window to see your filtered image!')
 
         shouldClearState = true;
       } else if (progress.progress === Progress.FAILED) {
@@ -58,11 +57,13 @@ const ProgressProvider: React.FC = ({ children }) => {
         progress.progress === Progress.PROCESSING ||
         progress.progress === Progress.READY
       ) {
+        clearInterval(intervalRef.current);
         intervalRef.current = setInterval(() => {
           if (progressState.notifyReference) {
-            toastUpdate(progressState.notifyReference as string, {
-              type: toast.TYPE.INFO,
-            });
+            // toastUpdate(progressState.notifyReference as string, {
+            //   type: toast.TYPE.INFO,
+            // });
+            checkImageProgress();
           }
         }, 5000);
       }
