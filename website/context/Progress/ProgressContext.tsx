@@ -1,6 +1,6 @@
 import API from "api";
 import { Progress } from "api/types";
-import { toastError, toastShow, toastSuccess, toastUpdate } from "common/toast";
+import { toastError, toastSuccess } from "common/toast";
 import {
   Dispatch,
   createContext,
@@ -9,7 +9,6 @@ import {
   useRef,
   useContext,
 } from "react";
-import { toast } from "react-toastify";
 import progressReducer, {
   ProgressAction,
   ProgressContextState,
@@ -32,6 +31,7 @@ const ProgressProvider: React.FC = ({ children }) => {
     progressReducer,
     defaultState
   );
+  const { dispatchSearch } = useSearch();
 
   const intervalRef = useRef<any>(undefined);
 
@@ -43,28 +43,17 @@ const ProgressProvider: React.FC = ({ children }) => {
 
       if (progress.progress === Progress.DONE) {
         toastSuccess(`Image processed successfully!`);
-        toastShow('Reload the window to see your filtered image!')
-
         shouldClearState = true;
+        dispatchSearch({
+          type: "SEARCH",
+          payload: null,
+        });
       } else if (progress.progress === Progress.FAILED) {
         toastError(
           "Failed to process image, please try again",
           new Error("Image Processing Failed")
         );
         shouldClearState = true;
-      } else if (
-        progress.progress === Progress.PROCESSING ||
-        progress.progress === Progress.READY
-      ) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = setInterval(() => {
-          if (progressState.notifyReference) {
-            // toastUpdate(progressState.notifyReference as string, {
-            //   type: toast.TYPE.INFO,
-            // });
-            checkImageProgress();
-          }
-        }, 5000);
       }
 
       if (shouldClearState) {
@@ -75,9 +64,13 @@ const ProgressProvider: React.FC = ({ children }) => {
   };
 
   useEffect(() => {
-    checkImageProgress();
+    if (progressState.id && progressState.status == Progress.PROCESSING) {
+      intervalRef.current = setInterval(() => {
+        checkImageProgress();
+      }, 5000);
+    }
 
-    // return () => intervalRef.current && clearInterval(intervalRef.current);
+    return () => intervalRef.current && clearInterval(intervalRef.current);
   }, [progressState]);
 
   return (

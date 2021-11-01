@@ -3,13 +3,15 @@ import { toastError } from "common/toast";
 import { Filter, ImageDocument } from "api/types";
 import { useCallback, useEffect, useState } from "react";
 import API from "api";
+import { useSearch } from "../context";
 
 interface HookReturn {
   images: ImageDocument[];
   loading: boolean;
 }
 
-export const useImages = (filter: Filter | null): HookReturn => {
+export const useImages = (): HookReturn => {
+  const { searchState } = useSearch();
   const [images, setImages] = useState<ImageDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,8 +19,7 @@ export const useImages = (filter: Filter | null): HookReturn => {
     setLoading(true);
 
     try {
-      // Replace with real API request when lambda working
-      const data = await API.feed.get(filter);
+      const data = await API.feed.get(searchState.search);
       setImages(data);
     } catch (e) {
       const err = e as AxiosError;
@@ -26,11 +27,11 @@ export const useImages = (filter: Filter | null): HookReturn => {
     }
 
     setLoading(false);
-  }, [filter]);
+  }, [searchState]);
 
   useEffect(() => {
     fetch();
-  }, [fetch]);
+  }, [fetch, searchState]);
 
   return { images, loading };
 };
