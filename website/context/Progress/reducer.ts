@@ -33,6 +33,10 @@ const progressReducer = produce(
       case "UPDATE_PROGRESS":
         state.status = action.payload.status;
         break;
+
+      case "CLEAR":
+        state = {} as ProgressContextState;
+        break;
     }
   }
 );
