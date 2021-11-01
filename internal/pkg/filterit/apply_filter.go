@@ -37,7 +37,7 @@ func applyFilter(imageReader io.ReadCloser, filter int) (blob []byte, err error)
 		err = mw.NegateImage(false)
 	case util.SEPIA:
 		_, threshold := imagick.GetQuantumRange()
-		err = mw.SepiaToneImage(float64(threshold)*0.8)
+		err = mw.SepiaToneImage(float64(threshold) * 0.1)
 	}
 
 	if err != nil {
