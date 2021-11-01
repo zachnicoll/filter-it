@@ -17,6 +17,10 @@ const defaultToastOptions: ToastOptions = {
   },
 };
 
+export const toastShow = (msg: string) => {
+  return toast(msg, defaultToastOptions);
+}
+
 export const toastError = (msg: string, err: Error): ReactText => {
   console.error(err);
   return toast(msg, defaultToastOptions);
@@ -40,5 +44,5 @@ export const toastUpdate = (toastId: string, opts: ToastOptions): void => {
 
 export const toastLoading = (msg: string): ReactText => {
   toast.dismiss();
-  return toast.loading("Processing Image...", defaultToastOptions);
+  return toast.loading("Processing Image...", {...defaultToastOptions, autoClose: false});
 };
