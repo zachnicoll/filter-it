@@ -5,39 +5,20 @@ This application serves as a platform for uploading images and applying various 
 
 The project was created as part of a university assignment for a unit in Cloud Computing. It explores the implemenation of various AWS services to create a scalable and persistent application, where it dynamically responds to changes in load, and uses both long term (S3/DynamoDB) and short term storage (ElastiCache).
 
+## Deployment
+Terraform is used to deploy the various AWS services used in this application. To deploy the infrastructure:
+
+```sh
+cd deployments
+terraform init
+terraform apply
+```
+
 ## AWS Services
 
 ### Architecture Diagram
 
-![Architecture Diagram](./content/architecture_diagram.png)
-
-#### S3
-
-#### DynamoDB
-
-#### ElastiCache
-
-#### Lambda & API Gateway
-
-#### SQS
-
-#### CloudWatch
-
-#### AutoScaler
-
-## Monorepo Structure
-
-```
-_
-|- content // Local files accessed by this README
-|- frontend // NextJS clientside application files
-|- lambda // Functions deployed to AWS Lambda
-    |- feed // Function for retrieving images based on tag
-    |- filter_progress // Function for retrieving current progress of image processing
-    |- upload // Function for uploading an image and queueing it for processing
-|- compute // Services deployed to AWS EC2 instances
-    |- image_processor // Service for consuming SQS messages and applying filters to images
-```
+![Architecture Diagram](./assets/architecture_diagram.png)
 
 ### Authors
 
