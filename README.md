@@ -1,4 +1,5 @@
 # Filter It!
+_A microservice-based, scalable image sharing platform._
 
 ## Purpose
 This application serves as a platform for uploading images and applying various filters to said images, before sharing the image to the rest of the users on the platform - akin to Instagram.
